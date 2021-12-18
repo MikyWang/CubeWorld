@@ -1,0 +1,19 @@
+{
+    "name": "MilkSpun.CubeWorld",
+    "rootNamespace": "MilkSpun.CubeWorld",
+    "references": [
+        "GUID:1e83f12525cdb42298fc13e4ce21764e",
+        "GUID:b3d4933afd13844dea6d08257bac6797",
+        "GUID:c9127852cc37547ca8ee75ade2bd4328",
+        "GUID:86fee10e7665d46a7bdfd403bf844c9d"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
