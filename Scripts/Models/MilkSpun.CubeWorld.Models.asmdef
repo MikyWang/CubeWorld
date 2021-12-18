@@ -1,0 +1,14 @@
+{
+    "name": "MilkSpun.CubeWorld.Models",
+    "rootNamespace": "MilkSpun.CubeWorld.Models",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
