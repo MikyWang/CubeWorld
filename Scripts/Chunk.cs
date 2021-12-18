@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using MilkSpun.CubeWorld.Models;
 using MilkSpun.CubeWorld.Utils;
 using UnityEngine;
@@ -10,9 +11,10 @@ namespace MilkSpun.CubeWorld
     {
         private MeshFilter _meshFilter;
         private MeshRenderer _meshRenderer;
+        private MeshCollider _meshCollider;
         private GameObject _chunkObject;
         private ChunkCoord _chunkCoord;
-        
+
         private List<Vector3> _vertices;
         private List<int> _triangles;
         private int _verticesIndex;
@@ -39,14 +41,14 @@ namespace MilkSpun.CubeWorld
                     var vertIndex = VoxelData.VoxelTris[p, i];
                     _vertices.Add(VoxelData.VoxelVerts[vertIndex]);
                 }
-                
+
                 _triangles.Add(_verticesIndex);
                 _triangles.Add(_verticesIndex + 1);
                 _triangles.Add(_verticesIndex + 2);
                 _triangles.Add(_verticesIndex + 2);
                 _triangles.Add(_verticesIndex + 1);
                 _triangles.Add(_verticesIndex + 3);
-                _verticesIndex+=4;
+                _verticesIndex += 4;
             }
 
             var mesh = new Mesh
@@ -56,8 +58,9 @@ namespace MilkSpun.CubeWorld
                 triangles = _triangles.ToArray()
             };
             _meshFilter.mesh = mesh;
+            _ = ReGenerateMeshCollider(mesh);
         }
-        
+
         private void InitGameObject()
         {
             _chunkObject = new GameObject(_chunkCoord.ToString());
@@ -71,6 +74,14 @@ namespace MilkSpun.CubeWorld
             _meshFilter = _chunkObject.AddComponent<MeshFilter>();
             _meshRenderer = _chunkObject.AddComponent<MeshRenderer>();
             _meshRenderer.material = GameManager.Instance.ChunkMaterial;
+            _meshCollider = _chunkObject.AddComponent<MeshCollider>();
+        }
+
+        private async Task ReGenerateMeshCollider(Mesh mesh)
+        {
+            await Task.Yield();
+            Physics.BakeMesh(mesh.GetInstanceID(), false);
+            _meshCollider.sharedMesh = mesh;
         }
 
     }
