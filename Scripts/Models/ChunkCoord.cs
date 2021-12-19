@@ -19,7 +19,7 @@ namespace MilkSpun.CubeWorld.Models
 
         public override string ToString()
         {
-            return $"Chunk({x},{z})";
+            return $"ChunkCoord ({x},{z}) ";
         }
 
         public static bool operator ==(ChunkCoord a, ChunkCoord b)

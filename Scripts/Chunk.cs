@@ -17,29 +17,55 @@ namespace MilkSpun.CubeWorld
 
         private List<Vector3> _vertices;
         private List<int> _triangles;
+        private List<Vector2> _uv;
         private int _verticesIndex;
+
 
         public Vector3 Position => _chunkObject.transform.position;
         private static Transform World => GameManager.Instance.World;
+        private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
 
         public Chunk(in ChunkCoord chunkCoord)
         {
             _chunkCoord = chunkCoord;
             InitGameObject();
-            CreateMesh();
+            CreateChunk();
         }
 
-        private void CreateMesh()
+        private void CreateChunk()
         {
             _vertices = new List<Vector3>();
             _triangles = new List<int>();
+            _uv = new List<Vector2>();
+            this.LoopVoxel((x, y, z) =>
+            {
+                PopulateVoxel(new Vector3(x, y, z));
+            });
+            var mesh = new Mesh
+            {
+                name = _chunkCoord.ToString(),
+                vertices = _vertices.ToArray(),
+                triangles = _triangles.ToArray(),
+                uv = _uv.ToArray()
+            };
+            _meshFilter.mesh = mesh;
+            _ = ReGenerateMeshCollider(mesh);
+        }
 
+        private void PopulateVoxel(Vector3 voxelPos)
+        {
             for (var p = 0; p < 6; p++)
             {
+                if (IsPlaneInVisible(voxelPos + ChunkConfig.VoxelFaceOffset[p]))
+                {
+                    continue;
+                }
+
                 for (var i = 0; i < 4; i++)
                 {
-                    var vertIndex = VoxelData.VoxelTris[p, i];
-                    _vertices.Add(VoxelData.VoxelVerts[vertIndex]);
+                    var vertIndex = ChunkConfig.VoxelTris[p, i];
+                    _vertices.Add(ChunkConfig.VoxelVerts[vertIndex] + voxelPos);
+                    _uv.Add(ChunkConfig.Uvs[i]);
                 }
 
                 _triangles.Add(_verticesIndex);
@@ -50,15 +76,22 @@ namespace MilkSpun.CubeWorld
                 _triangles.Add(_verticesIndex + 3);
                 _verticesIndex += 4;
             }
+        }
 
-            var mesh = new Mesh
-            {
-                name = _chunkCoord.ToString(),
-                vertices = _vertices.ToArray(),
-                triangles = _triangles.ToArray()
-            };
-            _meshFilter.mesh = mesh;
-            _ = ReGenerateMeshCollider(mesh);
+        private static bool IsPlaneInVisible(Vector3 voxelFacePos)
+        {
+            var x = Mathf.FloorToInt(voxelFacePos.x);
+            var y = Mathf.FloorToInt(voxelFacePos.y);
+            var z = Mathf.FloorToInt(voxelFacePos.z);
+            var width = ChunkConfig.chunkWidth;
+            var height = ChunkConfig.chunkHeight;
+
+            return x >= 0 &&
+                   x <= width - 1 &&
+                   y >= 0 &&
+                   y <= height - 1 &&
+                   z >= 0 &&
+                   z <= width - 1;
         }
 
         private void InitGameObject()

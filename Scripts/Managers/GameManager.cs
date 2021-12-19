@@ -12,8 +12,10 @@ namespace MilkSpun.CubeWorld
     {
         [Tooltip("地形材质")]
         [PreviewField(50f, ObjectFieldAlignment.Right)]
-        [SerializeField]
+        [SerializeField,Space]
         private Material chunkMaterial;
+        [InlineEditor,Space]
+        public ChunkConfig chunkConfig;
         public Transform World { get; set; }
         public Material ChunkMaterial => chunkMaterial;
         protected override void Awake()
@@ -22,9 +24,18 @@ namespace MilkSpun.CubeWorld
             DontDestroyOnLoad(this);
         }
 
+        [OnInspectorInit]
+        private void Init()
+        {
+            base.Awake();
+        }
+
+        [Button("创建世界")]
         private void Start()
         {
-            World = GameObject.FindWithTag("World").transform;
+            if (World)
+                DestroyImmediate(World.gameObject);
+            World = new GameObject("World").transform;
             var chunk = new Chunk(new ChunkCoord(0, 0));
         }
     }
