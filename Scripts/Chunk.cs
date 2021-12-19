@@ -50,7 +50,7 @@ namespace MilkSpun.CubeWorld
                 vertices = _vertices.ToArray(),
                 triangles = _triangles.ToArray(),
                 uv = _uv.ToArray(),
-                uv2 =_uv2.ToArray()
+                uv2 = _uv2.ToArray()
             };
             _meshFilter.mesh = mesh;
             _ = ReGenerateMeshCollider(mesh);
@@ -141,9 +141,9 @@ namespace MilkSpun.CubeWorld
             _chunkObject.transform.SetParent(World);
             _chunkObject.transform.localPosition = new Vector3
             {
-                x = _chunkCoord.x,
+                x = _chunkCoord.x * ChunkConfig.chunkWidth,
                 y = 0f,
-                z = _chunkCoord.z
+                z = _chunkCoord.z * ChunkConfig.chunkWidth
             };
             _meshFilter = _chunkObject.AddComponent<MeshFilter>();
             _meshRenderer = _chunkObject.AddComponent<MeshRenderer>();

@@ -18,6 +18,8 @@ namespace MilkSpun.CubeWorld
         [InlineEditor, Space] public List<VoxelConfig> voxelConfigs;
         public Transform World { get; set; }
         public Material ChunkMaterial => chunkMaterial;
+
+        private Chunk[,] _chunks;
         protected override void Awake()
         {
             base.Awake();
@@ -33,10 +35,22 @@ namespace MilkSpun.CubeWorld
         [Button("创建世界")]
         private void Start()
         {
+            GenerateWorld();
+        }
+
+        private void GenerateWorld()
+        {
             if (World)
                 DestroyImmediate(World.gameObject);
             World = new GameObject("World").transform;
-            var chunk = new Chunk(new ChunkCoord(0, 0));
+            _chunks = new Chunk[chunkConfig.chunkCoordSize, chunkConfig.chunkCoordSize];
+            for (var z = 0; z < chunkConfig.chunkCoordSize; z++)
+            {
+                for (var x = 0; x < chunkConfig.chunkCoordSize; x++)
+                {
+                    _chunks[x, z] = new Chunk(new ChunkCoord(x, z));
+                }
+            }
         }
     }
 }
