@@ -1,7 +1,9 @@
 {
     "name": "MilkSpun.CubeWorld.Models",
     "rootNamespace": "MilkSpun.CubeWorld.Models",
-    "references": [],
+    "references": [
+        "GUID:c9127852cc37547ca8ee75ade2bd4328"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

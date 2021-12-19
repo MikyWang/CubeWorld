@@ -27,5 +27,28 @@ namespace MilkSpun.CubeWorld.Utils
                 }
             }
         }
+
+        public static int GetTextureID(
+            this VoxelConfig voxelConfig,
+            VoxelFaceType voxelFaceType,
+            int textureAtlasSize)
+        {
+            return voxelFaceType switch
+            {
+                VoxelFaceType.Back => voxelConfig.backFaceTexture +
+                                      voxelConfig.page * textureAtlasSize,
+                VoxelFaceType.Front => voxelConfig.frontFaceTexture +
+                                       voxelConfig.page * textureAtlasSize,
+                VoxelFaceType.Top => voxelConfig.topFaceTexture +
+                                     voxelConfig.page * textureAtlasSize,
+                VoxelFaceType.Bottom => voxelConfig.bottomFaceTexture +
+                                        voxelConfig.page * textureAtlasSize,
+                VoxelFaceType.Left => voxelConfig.leftFaceTexture +
+                                      voxelConfig.page * textureAtlasSize,
+                VoxelFaceType.Right => voxelConfig.rightFaceTexture +
+                                       voxelConfig.page * textureAtlasSize,
+                _ => 0
+            };
+        }
     }
 }

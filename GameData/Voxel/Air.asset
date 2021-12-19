@@ -9,9 +9,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 826a4a7968a864c1fb7f56678f0701d9, type: 3}
-  m_Name: Default
+  m_Script: {fileID: 11500000, guid: b01867561f57246c2975b078bf66682c, type: 3}
+  m_Name: Air
   m_EditorClassIdentifier: 
-  chunkWidth: 5
-  chunkHeight: 5
-  textureAtlasSizeInBlocks: 4
+  voxelMapType: 0
+  isSolid: 0
+  page: 0
+  backFaceTexture: 0
+  frontFaceTexture: 0
+  topFaceTexture: 0
+  bottomFaceTexture: 0
+  leftFaceTexture: 0
+  rightFaceTexture: 0

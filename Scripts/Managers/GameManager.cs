@@ -12,10 +12,10 @@ namespace MilkSpun.CubeWorld
     {
         [Tooltip("地形材质")]
         [PreviewField(50f, ObjectFieldAlignment.Right)]
-        [SerializeField,Space]
+        [SerializeField, Space]
         private Material chunkMaterial;
-        [InlineEditor,Space]
-        public ChunkConfig chunkConfig;
+        [InlineEditor, Space] public ChunkConfig chunkConfig;
+        [InlineEditor, Space] public List<VoxelConfig> voxelConfigs;
         public Transform World { get; set; }
         public Material ChunkMaterial => chunkMaterial;
         protected override void Awake()

@@ -10,7 +10,11 @@ namespace MilkSpun.CubeWorld.Models
     {
         public int chunkWidth = 16;
         public int chunkHeight = 128;
+        public int textureAtlasSizeInBlocks = 4; //整个纹理4x4个小纹理
 
+
+        public float NormalizedBlockTextureSize => 1f / textureAtlasSizeInBlocks;
+        public int TextureAtlasSize => textureAtlasSizeInBlocks * textureAtlasSizeInBlocks;
         /// <summary>
         ///每个Cube的顶点数据
         /// </summary>

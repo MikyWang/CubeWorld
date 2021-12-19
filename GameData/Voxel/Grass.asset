@@ -9,9 +9,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 826a4a7968a864c1fb7f56678f0701d9, type: 3}
-  m_Name: Default
+  m_Script: {fileID: 11500000, guid: b01867561f57246c2975b078bf66682c, type: 3}
+  m_Name: Grass
   m_EditorClassIdentifier: 
-  chunkWidth: 5
-  chunkHeight: 5
-  textureAtlasSizeInBlocks: 4
+  voxelMapType: 5
+  isSolid: 1
+  page: 0
+  backFaceTexture: 5
+  frontFaceTexture: 5
+  topFaceTexture: 1
+  bottomFaceTexture: 1
+  leftFaceTexture: 5
+  rightFaceTexture: 5
