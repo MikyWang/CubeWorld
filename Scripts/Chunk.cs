@@ -87,13 +87,20 @@ namespace MilkSpun.CubeWorld
             }
         }
 
-        private static bool IsPlaneInVisible(Vector3 voxelPos, VoxelFaceType voxelFaceType)
+        private bool IsPlaneInVisible(Vector3 voxelPos, VoxelFaceType voxelFaceType)
         {
-            var voxelFacePos = voxelPos + ChunkConfig.VoxelFaceOffset[(int)voxelFaceType];
+            var xCoordPos = voxelPos.x + _chunkCoord.x * ChunkConfig.chunkWidth;
+            var zCoordPos = voxelPos.z + _chunkCoord.z * ChunkConfig.chunkWidth;
+
+            var voxelFacePos = new Vector3(xCoordPos, voxelPos.y, zCoordPos) +
+                               ChunkConfig.VoxelFaceOffset[(int)
+                                   voxelFaceType];
+
             var x = Mathf.FloorToInt(voxelFacePos.x);
             var y = Mathf.FloorToInt(voxelFacePos.y);
             var z = Mathf.FloorToInt(voxelFacePos.z);
-            var width = ChunkConfig.chunkWidth;
+
+            var width = ChunkConfig.WorldSizeInVoxels;
             var height = ChunkConfig.chunkHeight;
 
             return x >= 0 &&

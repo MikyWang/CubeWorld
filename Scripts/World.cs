@@ -2,22 +2,27 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MilkSpun.Common;
 using MilkSpun.CubeWorld.Models;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace MilkSpun.CubeWorld
 {
-    public class World
+    public class World:IWorld
     {
         public Transform Transform => _worldObject.transform;
+        public Vector3 Position => Transform.position;
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
 
         private GameObject _worldObject;
         private Chunk[,] _chunks;
-
-        public World()
+        private readonly Vector3 _center;
+        
+        public  World():this(Vector3.zero){}
+        public World(Vector3 center)
         {
+            _center = center;
             _chunks = new Chunk[ChunkConfig.chunkCoordSize, ChunkConfig.chunkCoordSize];
             GenerateWorld();
         }
@@ -31,13 +36,25 @@ namespace MilkSpun.CubeWorld
             
             return this;
         }
+        
+        public bool CheckPositionInWorld(float x, float y, float z)
+        {
+            throw new NotImplementedException();
+        }
+        
         private void GenerateWorldObject()
         {
             if (_worldObject)
             {
                 Object.DestroyImmediate(_worldObject);
             }
-            _worldObject = new GameObject("World");
+            _worldObject = new GameObject("World")
+            {
+                transform =
+                {
+                    position = _center
+                }
+            };
         }
         private async Task PopulateBottomLeftWorld()
         {
@@ -84,8 +101,6 @@ namespace MilkSpun.CubeWorld
                 }
             }
         }
-
-       
 
     }
 }

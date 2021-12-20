@@ -44,6 +44,7 @@ namespace MilkSpun.CubeWorld
         private void Start()
         {
             World = World is null ? new World() : World.GenerateWorld();
+            // var player = Instantiate(originalPlayerPrefab);
         }
 
 

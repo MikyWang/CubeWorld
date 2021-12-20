@@ -17,7 +17,7 @@ namespace MilkSpun.CubeWorld.Models
         [Tooltip("世界上拥有多少个Chunk,默认5x5")]
         public int chunkCoordSize = 5;
 
-
+        public  int WorldSizeInVoxels => chunkCoordSize * chunkWidth;
         public float NormalizedBlockTextureSize => 1f / textureAtlasSizeInBlocks;
         public int TextureAtlasSize => textureAtlasSizeInBlocks * textureAtlasSizeInBlocks;
         /// <summary>
@@ -40,18 +40,11 @@ namespace MilkSpun.CubeWorld.Models
         public static readonly int[,] VoxelTris =
         {
             { 0, 3, 1, 2 }, //后面
-            { 4, 5, 7, 6 }, //前面
+            { 5, 6, 4, 7 }, //前面
             { 3, 7, 2, 6 }, //上面
-            { 0, 1, 4, 5 }, //下面
+            { 1, 5, 0, 4 }, //下面
             { 4, 7, 0, 3 }, //左面
             { 1, 2, 5, 6 }  //右面
-        };
-        public static readonly Vector2[] Uvs =
-        {
-            new(0f, 0f),
-            new(1f, 0f),
-            new(1f, 1f),
-            new(0f, 1f)
         };
 
         /// <summary>
