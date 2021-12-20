@@ -318,6 +318,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50205190533ff4402a9895db969fa215, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  originalPlayerPrefab: {fileID: 7379497192990198179, guid: 1c87604a32a2943fd9380475fce41375,
+    type: 3}
   chunkMaterial: {fileID: 2100000, guid: 812fa89cd819945eaa4408de0474f145, type: 2}
   chunkConfig: {fileID: 11400000, guid: e1a8320252fd14528958ad49b03c52f2, type: 2}
   voxelConfigs:

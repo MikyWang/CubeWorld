@@ -23,7 +23,7 @@ namespace MilkSpun.CubeWorld
 
 
         public Vector3 Position => _chunkObject.transform.position;
-        private static Transform World => GameManager.Instance.World;
+        private static World World => GameManager.Instance.World;
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
 
         public Chunk(in ChunkCoord chunkCoord)
@@ -138,7 +138,7 @@ namespace MilkSpun.CubeWorld
         private void InitGameObject()
         {
             _chunkObject = new GameObject(_chunkCoord.ToString());
-            _chunkObject.transform.SetParent(World);
+            _chunkObject.transform.SetParent(World.Transform);
             _chunkObject.transform.localPosition = new Vector3
             {
                 x = _chunkCoord.x * ChunkConfig.chunkWidth,
