@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 826a4a7968a864c1fb7f56678f0701d9, type: 3}
   m_Name: Default
   m_EditorClassIdentifier: 
-  chunkWidth: 1
-  chunkHeight: 1
+  chunkWidth: 16
+  chunkHeight: 128
   textureAtlasSizeInBlocks: 4
-  chunkCoordSize: 5
+  chunkCoordSize: 10
