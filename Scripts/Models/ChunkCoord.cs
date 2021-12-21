@@ -6,7 +6,7 @@ using UnityEngine;
 namespace MilkSpun.CubeWorld.Models
 {
     [System.Serializable]
-    public struct ChunkCoord
+    public struct ChunkCoord:IEquatable<ChunkCoord>
     {
         public int x;
         public int z;

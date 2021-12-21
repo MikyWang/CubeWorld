@@ -3,13 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MilkSpun.Common;
+using MilkSpun.CubeWorld.Managers;
 using MilkSpun.CubeWorld.Models;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace MilkSpun.CubeWorld
 {
-    public class World:IWorld
+    public class World : IWorld
     {
         public Transform Transform => _worldObject.transform;
         public Vector3 Position => Transform.position;
@@ -18,8 +19,8 @@ namespace MilkSpun.CubeWorld
         private GameObject _worldObject;
         private Chunk[,] _chunks;
         private readonly Vector3 _center;
-        
-        public  World():this(Vector3.zero){}
+
+        public World() : this(Vector3.zero) { }
         public World(Vector3 center)
         {
             _center = center;
@@ -33,15 +34,15 @@ namespace MilkSpun.CubeWorld
             _ = PopulateBottomRightWorld();
             _ = PopulateTopLeftWorld();
             _ = PopulateTopRightWorld();
-            
+
             return this;
         }
-        
+
         public bool CheckPositionInWorld(float x, float y, float z)
         {
             throw new NotImplementedException();
         }
-        
+
         private void GenerateWorldObject()
         {
             if (_worldObject)

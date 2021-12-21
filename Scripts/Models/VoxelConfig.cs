@@ -2,13 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace MilkSpun.CubeWorld.Models
 {
     [CreateAssetMenu(fileName = "", menuName = "MilkSpun/创建VoxelConfig")]
     public partial class VoxelConfig : ScriptableObject
     {
-        [Title("基本设置")] [Tooltip("方块类型")] public VoxelMapType voxelMapType;
+        [FormerlySerializedAs("voxelMapType")] [Title("基本设置")] [Tooltip("方块类型")] public VoxelType voxelType;
         [Tooltip("是否为固体.")] public bool isSolid;
         [Title("纹理ID")]
         [Tooltip("使用第几页纹理")]
@@ -38,7 +39,7 @@ namespace MilkSpun.CubeWorld.Models
         Right
     }
 
-    public enum VoxelMapType : byte
+    public enum VoxelType : byte
     {
         Air,
         Dirt,

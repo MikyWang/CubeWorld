@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MilkSpun.CubeWorld.Managers;
 using MilkSpun.CubeWorld.Models;
 using MilkSpun.CubeWorld.Utils;
 using UnityEngine;
@@ -15,11 +16,12 @@ namespace MilkSpun.CubeWorld
         private GameObject _chunkObject;
         private ChunkCoord _chunkCoord;
 
-        private List<Vector3> _vertices;
-        private List<int> _triangles;
-        private List<Vector2> _uv;
-        private List<Vector2> _uv2; //存放Texture2D Array的索引.
+        private readonly List<Vector3> _vertices;
+        private readonly List<int> _triangles;
+        private readonly List<Vector2> _uv;
+        private readonly List<Vector2> _uv2; //存放Texture2D Array的索引.
         private int _verticesIndex;
+        private readonly Voxel[,,] _voxels;
 
 
         public Vector3 Position => _chunkObject.transform.position;
@@ -28,6 +30,12 @@ namespace MilkSpun.CubeWorld
 
         public Chunk(in ChunkCoord chunkCoord)
         {
+            _vertices = new List<Vector3>();
+            _triangles = new List<int>();
+            _uv = new List<Vector2>();
+            _uv2 = new List<Vector2>();
+            _voxels = new Voxel[ChunkConfig.chunkWidth, ChunkConfig.chunkHeight,
+                ChunkConfig.chunkWidth];
             _chunkCoord = chunkCoord;
             InitGameObject();
             CreateChunk();
@@ -35,15 +43,15 @@ namespace MilkSpun.CubeWorld
 
         private void CreateChunk()
         {
-            _vertices = new List<Vector3>();
-            _triangles = new List<int>();
-            _uv = new List<Vector2>();
-            _uv2 = new List<Vector2>();
-
             this.LoopVoxel((x, y, z) =>
             {
-                PopulateVoxel(new Vector3(x, y, z));
+                _voxels[x, y, z] = new Voxel(_chunkCoord, x, y, z, VoxelType.Grass);
+                PopulateVoxel(in _voxels[x, y, z]);
             });
+            CreateMesh();
+        }
+        private void CreateMesh()
+        {
             var mesh = new Mesh
             {
                 name = _chunkCoord.ToString(),
@@ -54,13 +62,14 @@ namespace MilkSpun.CubeWorld
             };
             _meshFilter.mesh = mesh;
             _ = ReGenerateMeshCollider(mesh);
+            ClearData();
         }
 
-        private void PopulateVoxel(Vector3 voxelPos)
+        private void PopulateVoxel(in Voxel voxel)
         {
             for (var p = 0; p < 6; p++)
             {
-                if (IsPlaneInVisible(voxelPos, (VoxelFaceType)p))
+                if (voxel.IsPlaneInVisible((VoxelFaceType)p))
                 {
                     continue;
                 }
@@ -68,13 +77,11 @@ namespace MilkSpun.CubeWorld
                 for (var i = 0; i < 4; i++)
                 {
                     var vertIndex = ChunkConfig.VoxelTris[p, i];
-                    _vertices.Add(ChunkConfig.VoxelVerts[vertIndex] + voxelPos);
+                    _vertices.Add(ChunkConfig.VoxelVerts[vertIndex] + voxel.LocalPos);
                 }
 
                 //TODO 根据噪声图生成不同的Voxel并显示.
-                var faceType = (VoxelFaceType)p;
-                var textureID = GameManager.Instance.voxelConfigs[1]
-                    .GetTextureID(faceType, ChunkConfig.TextureAtlasSize);
+                var textureID = voxel.GetTextureID((VoxelFaceType)p, ChunkConfig.TextureAtlasSize);
                 AddTexture(textureID);
 
                 _triangles.Add(_verticesIndex);
@@ -85,30 +92,6 @@ namespace MilkSpun.CubeWorld
                 _triangles.Add(_verticesIndex + 3);
                 _verticesIndex += 4;
             }
-        }
-
-        private bool IsPlaneInVisible(Vector3 voxelPos, VoxelFaceType voxelFaceType)
-        {
-            var xCoordPos = voxelPos.x + _chunkCoord.x * ChunkConfig.chunkWidth;
-            var zCoordPos = voxelPos.z + _chunkCoord.z * ChunkConfig.chunkWidth;
-
-            var voxelFacePos = new Vector3(xCoordPos, voxelPos.y, zCoordPos) +
-                               ChunkConfig.VoxelFaceOffset[(int)
-                                   voxelFaceType];
-
-            var x = Mathf.FloorToInt(voxelFacePos.x);
-            var y = Mathf.FloorToInt(voxelFacePos.y);
-            var z = Mathf.FloorToInt(voxelFacePos.z);
-
-            var width = ChunkConfig.WorldSizeInVoxels;
-            var height = ChunkConfig.chunkHeight;
-
-            return x >= 0 &&
-                   x <= width - 1 &&
-                   y >= 0 &&
-                   y <= height - 1 &&
-                   z >= 0 &&
-                   z <= width - 1;
         }
 
         private void AddTexture(int textureID)
@@ -156,6 +139,18 @@ namespace MilkSpun.CubeWorld
             _meshRenderer = _chunkObject.AddComponent<MeshRenderer>();
             _meshRenderer.material = GameManager.Instance.ChunkMaterial;
             _meshCollider = _chunkObject.AddComponent<MeshCollider>();
+        }
+
+        private void ClearData()
+        {
+            _vertices.Clear();
+            _vertices.TrimExcess();
+            _triangles.Clear();
+            _triangles.TrimExcess();
+            _uv.Clear();
+            _uv.TrimExcess();
+            _uv2.Clear();
+            _uv2.TrimExcess();
         }
 
         private async Task ReGenerateMeshCollider(Mesh mesh)

@@ -4,27 +4,32 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Cinemachine;
 using MilkSpun.Common;
 using MilkSpun.CubeWorld.Models;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-namespace MilkSpun.CubeWorld
+namespace MilkSpun.CubeWorld.Managers
 {
     public class GameManager : Singleton<GameManager>
     {
-        [Tooltip("起始玩家的Prefab")]
+        [Tooltip("起始玩家的预制件")]
         [PreviewField(50f, ObjectFieldAlignment.Right)]
-        [SerializeField, Space]
+        [SerializeField, Space, Required]
         private GameObject originalPlayerPrefab;
+        [Tooltip("CineMachine的预制件")]
+        [SerializeField, Space, Required]
+        private GameObject cmPrefab;
         [Tooltip("地形材质")]
         [PreviewField(50f, ObjectFieldAlignment.Right)]
-        [SerializeField, Space]
+        [SerializeField, Space, Required]
         private Material chunkMaterial;
         [InlineEditor, Space] public ChunkConfig chunkConfig;
         [InlineEditor, Space] public List<VoxelConfig> voxelConfigs;
         public World World { get; private set; }
+        public CinemachineFreeLook CmFreeLook { get; private set; }
         public Material ChunkMaterial => chunkMaterial;
         public GameObject OriginalPlayerPrefabPrefab => originalPlayerPrefab;
 
@@ -43,11 +48,11 @@ namespace MilkSpun.CubeWorld
         [Button("创建世界")]
         private void Start()
         {
+            CmFreeLook ??= Instantiate(cmPrefab).GetComponent<CinemachineFreeLook>();
             World = World is null ? new World() : World.GenerateWorld();
             // var player = Instantiate(originalPlayerPrefab);
         }
 
-
-
+        
     }
 }

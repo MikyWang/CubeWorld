@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b01867561f57246c2975b078bf66682c, type: 3}
   m_Name: Grass
   m_EditorClassIdentifier: 
-  voxelMapType: 5
+  voxelType: 5
   isSolid: 1
   page: 0
   backFaceTexture: 5

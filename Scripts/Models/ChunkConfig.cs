@@ -17,8 +17,17 @@ namespace MilkSpun.CubeWorld.Models
         [Tooltip("世界上拥有多少个Chunk,默认5x5")]
         public int chunkCoordSize = 5;
 
+        /// <summary>
+        /// 世界的宽度
+        /// </summary>
         public  int WorldSizeInVoxels => chunkCoordSize * chunkWidth;
+        /// <summary>
+        /// 每个纹理的uv长度
+        /// </summary>
         public float NormalizedBlockTextureSize => 1f / textureAtlasSizeInBlocks;
+        /// <summary>
+        /// 每个纹理图包含的纹理个数
+        /// </summary>
         public int TextureAtlasSize => textureAtlasSizeInBlocks * textureAtlasSizeInBlocks;
         /// <summary>
         ///每个Cube的顶点数据
