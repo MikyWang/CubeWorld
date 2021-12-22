@@ -14,10 +14,11 @@ namespace MilkSpun.CubeWorld
     {
         public Transform Transform => _worldObject.transform;
         public Vector3 Position => Transform.position;
+        public Chunk[,] Chunks => _chunks;
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
 
         private GameObject _worldObject;
-        private Chunk[,] _chunks;
+        private readonly Chunk[,] _chunks;
         private readonly Vector3 _center;
 
         public World() : this(Vector3.zero) { }
@@ -34,7 +35,6 @@ namespace MilkSpun.CubeWorld
             _ = PopulateBottomRightWorld();
             _ = PopulateTopLeftWorld();
             _ = PopulateTopRightWorld();
-
             return this;
         }
 

@@ -12,7 +12,7 @@ namespace MilkSpun.CubeWorld.Models
         public VoxelType VoxelType;
         public ChunkCoord ChunkCoord { get; }
         public Vector3 LocalPos => new (X, Y, Z);
-
+        
         public Voxel(
             in ChunkCoord chunkCoord,
             int x,

@@ -12,7 +12,7 @@ namespace MilkSpun.CubeWorld.Utils
     {
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
         private static List<VoxelConfig> VoxelConfigs => GameManager.Instance.voxelConfigs;
-        
+        private static World World => GameManager.Instance.World;
         /// <summary>
         /// 循环chunk的每个顶点
         /// </summary>
@@ -42,7 +42,7 @@ namespace MilkSpun.CubeWorld.Utils
         {
             var voxelConfig = voxel.GetVoxelConfig();
             if (!voxelConfig.isSolid) return true;
-            
+
             var xCoordPos = voxel.X + voxel.ChunkCoord.x * ChunkConfig.chunkWidth;
             var zCoordPos = voxel.Z + voxel.ChunkCoord.z * ChunkConfig.chunkWidth;
 
@@ -63,6 +63,14 @@ namespace MilkSpun.CubeWorld.Utils
                    y <= height - 1 &&
                    z >= 0 &&
                    z <= width - 1;
+        }
+
+        public static Vector3 GetWorldPosition(this Voxel voxel)
+        {
+            var chunkX = voxel.ChunkCoord.x * ChunkConfig.chunkWidth;
+            var chunkZ = voxel.ChunkCoord.z * ChunkConfig.chunkWidth;
+            var localPos = new Vector3(chunkX, 0, chunkZ) + voxel.LocalPos;
+            return World.Transform.TransformPoint(localPos);
         }
 
         /// <summary>

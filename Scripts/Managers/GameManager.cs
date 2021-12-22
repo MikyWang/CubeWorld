@@ -48,11 +48,21 @@ namespace MilkSpun.CubeWorld.Managers
         [Button("创建世界")]
         private void Start()
         {
-            CmFreeLook ??= Instantiate(cmPrefab).GetComponent<CinemachineFreeLook>();
             World = World is null ? new World() : World.GenerateWorld();
-            // var player = Instantiate(originalPlayerPrefab);
+            SetCamera();
         }
 
-        
+        private void SetCamera()
+        {
+            CmFreeLook ??= Instantiate(cmPrefab).GetComponent<CinemachineFreeLook>();
+            var middle = chunkConfig.WorldSizeInVoxels / 2;
+            var pos = new Vector3(middle, chunkConfig.chunkHeight, middle);
+            var player = Instantiate(originalPlayerPrefab);
+            player.transform.position = pos;
+            CmFreeLook.LookAt = player.transform;
+            CmFreeLook.Follow = player.transform;
+        }
+
+
     }
 }

@@ -23,10 +23,15 @@ namespace MilkSpun.CubeWorld
         private int _verticesIndex;
         private readonly Voxel[,,] _voxels;
 
-
         public Vector3 Position => _chunkObject.transform.position;
         private static World World => GameManager.Instance.World;
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
+
+        public bool Active
+        {
+            set => _chunkObject.SetActive(value);
+            get => _chunkObject.activeSelf;
+        }
 
         public Chunk(in ChunkCoord chunkCoord)
         {
@@ -141,16 +146,19 @@ namespace MilkSpun.CubeWorld
             _meshCollider = _chunkObject.AddComponent<MeshCollider>();
         }
 
-        private void ClearData()
+        private async void ClearData()
         {
-            _vertices.Clear();
-            _vertices.TrimExcess();
-            _triangles.Clear();
-            _triangles.TrimExcess();
-            _uv.Clear();
-            _uv.TrimExcess();
-            _uv2.Clear();
-            _uv2.TrimExcess();
+            await Task.Run(() =>
+            {
+                _vertices.Clear();
+                _vertices.TrimExcess();
+                _triangles.Clear();
+                _triangles.TrimExcess();
+                _uv.Clear();
+                _uv.TrimExcess();
+                _uv2.Clear();
+                _uv2.TrimExcess();
+            });
         }
 
         private async Task ReGenerateMeshCollider(Mesh mesh)
