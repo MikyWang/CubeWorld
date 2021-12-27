@@ -46,6 +46,29 @@ namespace MilkSpun.CubeWorld
             CreateChunk();
         }
 
+        public ref Voxel GetVoxelFromPosition(float x, float y, float z)
+        {
+            var yVoxel = Mathf.FloorToInt(y);
+            var xVoxel = Mathf.FloorToInt(x - Position.x);
+            var zVoxel = Mathf.FloorToInt(z - Position.z);
+
+            return ref _voxels[xVoxel, yVoxel, zVoxel];
+        }
+
+        public bool IsPositionInChunk(float x, float y, float z)
+        {
+            var yVoxel = Mathf.FloorToInt(y);
+            var xVoxel = Mathf.FloorToInt(x - Position.x);
+            var zVoxel = Mathf.FloorToInt(z - Position.z);
+
+            return xVoxel >= 0 &&
+                   xVoxel <= ChunkConfig.chunkWidth - 1 &&
+                   yVoxel >= 0 &&
+                   yVoxel <= ChunkConfig.chunkHeight - 1 &&
+                   zVoxel >= 0 &&
+                   zVoxel <= ChunkConfig.chunkWidth - 1;
+        }
+
         private void CreateChunk()
         {
             this.LoopVoxel((x, y, z) =>
@@ -167,6 +190,8 @@ namespace MilkSpun.CubeWorld
             Physics.BakeMesh(mesh.GetInstanceID(), false);
             _meshCollider.sharedMesh = mesh;
         }
+        
+        
 
     }
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using MilkSpun.Common;
 using MilkSpun.CubeWorld.Managers;
 using MilkSpun.CubeWorld.Models;
+using MilkSpun.CubeWorld.Utils;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -38,9 +39,28 @@ namespace MilkSpun.CubeWorld
             return this;
         }
 
-        public bool CheckPositionInWorld(float x, float y, float z)
+        public bool CheckPositionOnVoxel(float x, float y, float z)
         {
-            throw new NotImplementedException();
+            var xChunk = Mathf.FloorToInt(x) / (ChunkConfig.chunkWidth-1);
+            var zChunk = Mathf.FloorToInt(z) / (ChunkConfig.chunkWidth-1);
+            if (xChunk < 0 ||
+                xChunk > ChunkConfig.WorldSizeInVoxels - 1 ||
+                zChunk < 0 ||
+                zChunk > ChunkConfig.WorldSizeInVoxels - 1)
+                return false;
+
+            var chunk = GetChunkFromPosition(x, z);
+            if (!chunk.IsPositionInChunk(x, y, z)) return false;
+
+            var voxel = chunk.GetVoxelFromPosition(x, y, z);
+            return voxel.GetVoxelConfig().isSolid;
+        }
+
+        private ref Chunk GetChunkFromPosition(float x, float z)
+        {
+            var xChunk = Mathf.FloorToInt(x) / (ChunkConfig.chunkWidth-1);
+            var zChunk = Mathf.FloorToInt(z) / (ChunkConfig.chunkWidth-1);
+            return ref _chunks[xChunk, zChunk];
         }
 
         private void GenerateWorldObject()

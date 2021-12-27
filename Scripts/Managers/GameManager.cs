@@ -6,22 +6,24 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cinemachine;
 using MilkSpun.Common;
+using MilkSpun.Common.MilkSpun.Scripts.Common;
 using MilkSpun.CubeWorld.Models;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 
 namespace MilkSpun.CubeWorld.Managers
 {
     public class GameManager : Singleton<GameManager>
     {
+        [Tooltip("CineMachine的预制件")]
+        [SerializeField, Space, Required]
+        private GameObject cmPrefab;
         [Tooltip("起始玩家的预制件")]
         [PreviewField(50f, ObjectFieldAlignment.Right)]
         [SerializeField, Space, Required]
         private GameObject originalPlayerPrefab;
-        [Tooltip("CineMachine的预制件")]
-        [SerializeField, Space, Required]
-        private GameObject cmPrefab;
         [Tooltip("地形材质")]
         [PreviewField(50f, ObjectFieldAlignment.Right)]
         [SerializeField, Space, Required]
@@ -38,17 +40,11 @@ namespace MilkSpun.CubeWorld.Managers
             base.Awake();
             DontDestroyOnLoad(this);
         }
-
-        [OnInspectorInit]
-        private void Init()
+        private async void Start()
         {
-            base.Awake();
-        }
-
-        [Button("创建世界")]
-        private void Start()
-        {
-            World = World is null ? new World() : World.GenerateWorld();
+            Random.InitState(chunkConfig.seed);
+            Locator.World = World = World is null ? new World() : World.GenerateWorld();
+            await Task.Delay(100);
             SetCamera();
         }
 
@@ -61,6 +57,7 @@ namespace MilkSpun.CubeWorld.Managers
             player.transform.position = pos;
             CmFreeLook.LookAt = player.transform;
             CmFreeLook.Follow = player.transform;
+            CmFreeLook.m_YAxis.Value = 0.5f;
         }
 
 
