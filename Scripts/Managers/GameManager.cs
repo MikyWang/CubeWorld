@@ -44,7 +44,7 @@ namespace MilkSpun.CubeWorld.Managers
         {
             Random.InitState(chunkConfig.seed);
             Locator.World = World = World is null ? new World() : World.GenerateWorld();
-            await Task.Delay(100);
+            await Task.Yield();
             SetCamera();
         }
 

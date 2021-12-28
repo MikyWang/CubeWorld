@@ -24,6 +24,7 @@ namespace MilkSpun.CubeWorld
         private readonly Voxel[,,] _voxels;
 
         public Vector3 Position => _chunkObject.transform.position;
+        public Vector3 LocalPosition => _chunkObject.transform.localPosition;
         private static World World => GameManager.Instance.World;
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
 
@@ -33,7 +34,7 @@ namespace MilkSpun.CubeWorld
             get => _chunkObject.activeSelf;
         }
 
-        public Chunk(in ChunkCoord chunkCoord)
+        public Chunk(ChunkCoord chunkCoord)
         {
             _vertices = new List<Vector3>();
             _triangles = new List<int>();
@@ -71,11 +72,7 @@ namespace MilkSpun.CubeWorld
 
         private void CreateChunk()
         {
-            this.LoopVoxel((x, y, z) =>
-            {
-                _voxels[x, y, z] = new Voxel(_chunkCoord, x, y, z, VoxelType.Grass);
-                PopulateVoxel(in _voxels[x, y, z]);
-            });
+            this.LoopVoxel(PopulateVoxel);
             CreateMesh();
         }
         private void CreateMesh()
@@ -93,8 +90,11 @@ namespace MilkSpun.CubeWorld
             ClearData();
         }
 
-        private void PopulateVoxel(in Voxel voxel)
+        private void PopulateVoxel(int x, int y, int z)
         {
+            _voxels[x, y, z] = new Voxel(this, x, y, z, VoxelType.Grass);
+            ref var voxel = ref _voxels[x, y, z];
+
             for (var p = 0; p < 6; p++)
             {
                 if (voxel.IsPlaneInVisible((VoxelFaceType)p))
@@ -190,8 +190,112 @@ namespace MilkSpun.CubeWorld
             Physics.BakeMesh(mesh.GetInstanceID(), false);
             _meshCollider.sharedMesh = mesh;
         }
-        
-        
+
+        public struct Voxel
+        {
+            public readonly int X;
+            public readonly int Y;
+            public readonly int Z;
+            public VoxelType VoxelType;
+            public Chunk Chunk { get; }
+            public Vector3 LocalPos => new(X, Y, Z);
+
+            public Voxel(
+                Chunk chunk,
+                int x,
+                int y,
+                int z,
+                VoxelType voxelType = VoxelType.Air)
+            {
+                X = x;
+                Y = y;
+                Z = z;
+                VoxelType = voxelType;
+                Chunk = chunk;
+            }
+
+            /// <summary>
+            /// 判断Voxel的面是否不可见
+            /// </summary>
+            /// <param name="voxelFaceType">Voxel的朝向 <see cref="VoxelFaceType"/></param>
+            /// <returns></returns>
+            public bool IsPlaneInVisible(VoxelFaceType voxelFaceType)
+            {
+                var voxelConfig = GetVoxelConfig();
+                if (!voxelConfig.isSolid) return true;
+
+                var xCoordPos = X + Chunk.LocalPosition.x;
+                var zCoordPos = Z + Chunk.LocalPosition.z;
+
+                var voxelFacePos = new Vector3(xCoordPos, Y, zCoordPos) +
+                                   ChunkConfig.VoxelFaceOffset[(int)
+                                       voxelFaceType];
+
+                var x = Mathf.FloorToInt(voxelFacePos.x);
+                var y = Mathf.FloorToInt(voxelFacePos.y);
+                var z = Mathf.FloorToInt(voxelFacePos.z);
+
+                var width = ChunkConfig.WorldSizeInVoxels;
+                var height = ChunkConfig.chunkHeight;
+
+                return x >= 0 &&
+                       x <= width - 1 &&
+                       y >= 0 &&
+                       y <= height - 1 &&
+                       z >= 0 &&
+                       z <= width - 1;
+            }
+
+            public Vector3 GetWorldPosition()
+            {
+                var localPos = Chunk.LocalPosition + LocalPos;
+                return World.Transform.TransformPoint(localPos);
+            }
+
+            /// <summary>
+            /// 获取Voxel的配置
+            /// </summary>
+            /// <returns>Voxel的配置</returns>
+            public VoxelConfig GetVoxelConfig()
+            {
+                var voxelType = VoxelType;
+                var voxelConfig =
+                    GameManager.Instance.voxelConfigs.Find(vt => vt.voxelType == voxelType);
+                return voxelConfig;
+            }
+
+            /// <summary>
+            /// 获取Voxel纹理的ID
+            /// </summary>
+            /// <param name="voxelFaceType">Voxel的朝向</param>
+            /// <param name="textureAtlasSize">贴图中所有纹理的个数 如:4x4</param>
+            /// <returns>纹理ID</returns>
+            public int GetTextureID(
+                VoxelFaceType voxelFaceType,
+                int textureAtlasSize)
+            {
+                var voxelConfig = GetVoxelConfig();
+
+                return voxelFaceType switch
+                {
+                    VoxelFaceType.Back => voxelConfig.backFaceTexture +
+                                          voxelConfig.page * textureAtlasSize,
+                    VoxelFaceType.Front => voxelConfig.frontFaceTexture +
+                                           voxelConfig.page * textureAtlasSize,
+                    VoxelFaceType.Top => voxelConfig.topFaceTexture +
+                                         voxelConfig.page * textureAtlasSize,
+                    VoxelFaceType.Bottom => voxelConfig.bottomFaceTexture +
+                                            voxelConfig.page * textureAtlasSize,
+                    VoxelFaceType.Left => voxelConfig.leftFaceTexture +
+                                          voxelConfig.page * textureAtlasSize,
+                    VoxelFaceType.Right => voxelConfig.rightFaceTexture +
+                                           voxelConfig.page * textureAtlasSize,
+                    _ => 0
+                };
+            }
+
+
+        }
 
     }
 }

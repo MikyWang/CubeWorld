@@ -44,9 +44,9 @@ namespace MilkSpun.CubeWorld
             var xChunk = Mathf.FloorToInt(x) / (ChunkConfig.chunkWidth-1);
             var zChunk = Mathf.FloorToInt(z) / (ChunkConfig.chunkWidth-1);
             if (xChunk < 0 ||
-                xChunk > ChunkConfig.WorldSizeInVoxels - 1 ||
+                xChunk > ChunkConfig.chunkCoordSize - 1 ||
                 zChunk < 0 ||
-                zChunk > ChunkConfig.WorldSizeInVoxels - 1)
+                zChunk > ChunkConfig.chunkCoordSize - 1)
                 return false;
 
             var chunk = GetChunkFromPosition(x, z);
