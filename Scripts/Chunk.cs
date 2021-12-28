@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MilkSpun.Common;
 using MilkSpun.CubeWorld.Managers;
 using MilkSpun.CubeWorld.Models;
 using MilkSpun.CubeWorld.Utils;
@@ -22,10 +23,10 @@ namespace MilkSpun.CubeWorld
         private readonly List<Vector2> _uv2; //存放Texture2D Array的索引.
         private int _verticesIndex;
         private readonly Voxel[,,] _voxels;
+        private static World _world;
 
         public Vector3 Position => _chunkObject.transform.position;
-        public Vector3 LocalPosition => _chunkObject.transform.localPosition;
-        private static World World => GameManager.Instance.World;
+        public Vector3 LocalPosition { get; private set; }
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
 
         public bool Active
@@ -34,7 +35,7 @@ namespace MilkSpun.CubeWorld
             get => _chunkObject.activeSelf;
         }
 
-        public Chunk(ChunkCoord chunkCoord)
+        public Chunk(ChunkCoord chunkCoord, World world)
         {
             _vertices = new List<Vector3>();
             _triangles = new List<int>();
@@ -43,8 +44,8 @@ namespace MilkSpun.CubeWorld
             _voxels = new Voxel[ChunkConfig.chunkWidth, ChunkConfig.chunkHeight,
                 ChunkConfig.chunkWidth];
             _chunkCoord = chunkCoord;
+            _world = world;
             InitGameObject();
-            CreateChunk();
         }
 
         public ref Voxel GetVoxelFromPosition(float x, float y, float z)
@@ -70,10 +71,14 @@ namespace MilkSpun.CubeWorld
                    zVoxel <= ChunkConfig.chunkWidth - 1;
         }
 
-        private void CreateChunk()
+        public async Task<Chunk> CreateChunk()
         {
-            this.LoopVoxel(PopulateVoxel);
+            await Task.Run(() =>
+            {
+                this.LoopVoxel(PopulateVoxel);
+            });
             CreateMesh();
+            return this;
         }
         private void CreateMesh()
         {
@@ -156,8 +161,8 @@ namespace MilkSpun.CubeWorld
         private void InitGameObject()
         {
             _chunkObject = new GameObject(_chunkCoord.ToString());
-            _chunkObject.transform.SetParent(World.Transform);
-            _chunkObject.transform.localPosition = new Vector3
+            _chunkObject.transform.SetParent(_world.Transform);
+            LocalPosition = _chunkObject.transform.localPosition = new Vector3
             {
                 x = _chunkCoord.x * ChunkConfig.chunkWidth,
                 y = 0f,
@@ -249,7 +254,7 @@ namespace MilkSpun.CubeWorld
             public Vector3 GetWorldPosition()
             {
                 var localPos = Chunk.LocalPosition + LocalPos;
-                return World.Transform.TransformPoint(localPos);
+                return _world.Transform.TransformPoint(localPos);
             }
 
             /// <summary>

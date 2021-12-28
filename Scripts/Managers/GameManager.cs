@@ -43,20 +43,24 @@ namespace MilkSpun.CubeWorld.Managers
         private async void Start()
         {
             Random.InitState(chunkConfig.seed);
-            Locator.World = World = World is null ? new World() : World.GenerateWorld();
-            await Task.Yield();
-            SetCamera();
+            Locator.World = World = World is null ? await new World().GenerateWorld() : await World.GenerateWorld();
+            SetCamera(GeneratePlayer());
         }
 
-        private void SetCamera()
+        private GameObject GeneratePlayer()
         {
-            CmFreeLook ??= Instantiate(cmPrefab).GetComponent<CinemachineFreeLook>();
-            var middle = chunkConfig.WorldSizeInVoxels / 2;
-            var pos = new Vector3(middle, chunkConfig.chunkHeight, middle);
+            var middle = World.MiddleCoord * chunkConfig.chunkWidth +
+                         Mathf.FloorToInt((float)chunkConfig.chunkWidth / 2);
+            var pos = new Vector3(middle, chunkConfig.chunkHeight+10f, middle);
             var player = Instantiate(originalPlayerPrefab);
             player.transform.position = pos;
-            CmFreeLook.LookAt = player.transform;
-            CmFreeLook.Follow = player.transform;
+            return player;
+        }
+        private void SetCamera(GameObject focusObject)
+        {
+            CmFreeLook ??= Instantiate(cmPrefab).GetComponent<CinemachineFreeLook>();
+            CmFreeLook.LookAt = focusObject.transform;
+            CmFreeLook.Follow = focusObject.transform;
             CmFreeLook.m_YAxis.Value = 0.5f;
         }
 
