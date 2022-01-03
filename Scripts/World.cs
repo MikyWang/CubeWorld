@@ -19,15 +19,17 @@ namespace MilkSpun.CubeWorld
         public int MiddleCoord { get; }
 
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
+        private static Biome Biome => GameManager.Instance.Biome;
+        private static int NoiseResolution => ChunkConfig.chunkWidth;
 
         private GameObject _worldObject;
         private readonly Chunk[,] _chunks;
-        private readonly Vector3 _center;
+        public Vector3 Center { get; }
 
         public World() : this(Vector3.zero) { }
         public World(Vector3 center)
         {
-            _center = center;
+            Center = center;
             MiddleCoord = Mathf.FloorToInt((float)ChunkConfig.chunkCoordSize / 2);
             _chunks = new Chunk[ChunkConfig.chunkCoordSize, ChunkConfig.chunkCoordSize];
         }
@@ -53,10 +55,57 @@ namespace MilkSpun.CubeWorld
                 return false;
 
             var chunk = GetChunkFromPosition(x, z);
+
             if (!chunk.IsPositionInChunk(x, y, z)) return false;
 
             var voxel = chunk.GetVoxelFromPosition(x, y, z);
             return voxel.GetVoxelConfig().isSolid;
+        }
+
+        public static VoxelType GenerateVoxelType(Vector3 pos)
+        {
+            //默认行为
+            var y = Mathf.FloorToInt(pos.y);
+            if (y == 0) return VoxelType.BedRock;
+
+            // 基础地形
+            var noise =
+                NoiseGenerator.Get2DPerlinNoise(new Vector2(pos.x, pos.z), 0, Biome.scale,
+                    NoiseResolution) *
+                Biome.terrainHeight;
+            var terrainHeight = Mathf.FloorToInt(noise) + Biome.solidGroundHeight;
+            if (y > terrainHeight)
+            {
+                return VoxelType.Air;
+            }
+
+            var voxelType = VoxelType.Air;
+
+            if (y == terrainHeight)
+            {
+                voxelType = VoxelType.Grass;
+            }
+            if (y < terrainHeight)
+            {
+                voxelType = y > terrainHeight - 5 ? VoxelType.Dirt : VoxelType.Stone;
+            }
+
+            //生物多样性地形
+
+            if (voxelType == VoxelType.Stone)
+            {
+                foreach (var lode in Biome.lodes)
+                {
+                    if (y < lode.minHeight || y > lode.maxHeight) continue;
+
+                    if (NoiseGenerator.Get3DPerlinNoise(pos, lode.offset, lode.scale,
+                            lode.threshold, 1))
+                    {
+                        voxelType = lode.voxelType;
+                    }
+                }
+            }
+            return voxelType;
         }
 
         private async Task PopulateMiddleChunk()
@@ -69,6 +118,10 @@ namespace MilkSpun.CubeWorld
         {
             var xChunk = Mathf.FloorToInt(x / ChunkConfig.chunkWidth);
             var zChunk = Mathf.FloorToInt(z / ChunkConfig.chunkWidth);
+            if (_chunks[xChunk, zChunk] is null)
+            {
+                _chunks[xChunk, zChunk] = new Chunk(new ChunkCoord(xChunk, zChunk), this);
+            }
             return ref _chunks[xChunk, zChunk];
         }
 
@@ -82,7 +135,7 @@ namespace MilkSpun.CubeWorld
             {
                 transform =
                 {
-                    position = _center
+                    position = Center
                 }
             };
         }
@@ -92,7 +145,9 @@ namespace MilkSpun.CubeWorld
             {
                 for (var x = MiddleCoord - 1; x >= 0; x--)
                 {
-                    _chunks[x, z] = await new Chunk(new ChunkCoord(x, z), this).CreateChunk();
+                    _chunks[x, z] = _chunks[x, z] is null
+                        ? await new Chunk(new ChunkCoord(x, z), this).CreateChunk()
+                        : await _chunks[x, z].CreateChunk();
                 }
             }
         }
@@ -103,7 +158,9 @@ namespace MilkSpun.CubeWorld
             {
                 for (var x = MiddleCoord; x >= 0; x--)
                 {
-                    _chunks[x, z] = await new Chunk(new ChunkCoord(x, z), this).CreateChunk();
+                    _chunks[x, z] = _chunks[x, z] is null
+                        ? await new Chunk(new ChunkCoord(x, z), this).CreateChunk()
+                        : await _chunks[x, z].CreateChunk();
                 }
             }
         }
@@ -113,7 +170,9 @@ namespace MilkSpun.CubeWorld
             {
                 for (var x = MiddleCoord + 1; x < ChunkConfig.chunkCoordSize; x++)
                 {
-                    _chunks[x, z] = await new Chunk(new ChunkCoord(x, z), this).CreateChunk();
+                    _chunks[x, z] = _chunks[x, z] is null
+                        ? await new Chunk(new ChunkCoord(x, z), this).CreateChunk()
+                        : await _chunks[x, z].CreateChunk();
                 }
             }
         }
@@ -123,7 +182,9 @@ namespace MilkSpun.CubeWorld
             {
                 for (var x = MiddleCoord; x < ChunkConfig.chunkCoordSize; x++)
                 {
-                    _chunks[x, z] = await new Chunk(new ChunkCoord(x, z), this).CreateChunk();
+                    _chunks[x, z] = _chunks[x, z] is null
+                        ? await new Chunk(new ChunkCoord(x, z), this).CreateChunk()
+                        : await _chunks[x, z].CreateChunk();
                 }
             }
         }

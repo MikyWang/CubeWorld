@@ -25,8 +25,8 @@ namespace MilkSpun.CubeWorld
         private readonly Voxel[,,] _voxels;
         private static World _world;
 
-        public Vector3 Position => _chunkObject.transform.position;
-        public Vector3 LocalPosition { get; private set; }
+        public Vector3 Position { get; }
+        public Vector3 LocalPosition { get; }
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
 
         public bool Active
@@ -45,7 +45,13 @@ namespace MilkSpun.CubeWorld
                 ChunkConfig.chunkWidth];
             _chunkCoord = chunkCoord;
             _world = world;
-            InitGameObject();
+            LocalPosition = new Vector3
+            {
+                x = _chunkCoord.x * ChunkConfig.chunkWidth,
+                y = 0f,
+                z = _chunkCoord.z * ChunkConfig.chunkWidth
+            };
+            Position = _world.Center + LocalPosition;
         }
 
         public ref Voxel GetVoxelFromPosition(float x, float y, float z)
@@ -53,8 +59,14 @@ namespace MilkSpun.CubeWorld
             var yVoxel = Mathf.FloorToInt(y);
             var xVoxel = Mathf.FloorToInt(x - Position.x);
             var zVoxel = Mathf.FloorToInt(z - Position.z);
-
-            return ref _voxels[xVoxel, yVoxel, zVoxel];
+            ref var voxel = ref _voxels[xVoxel, yVoxel, zVoxel];
+            if (!voxel.Initialize)
+            {
+                voxel = new Voxel(this, xVoxel, yVoxel, zVoxel);
+                var pos = voxel.GetWorldPosition();
+                voxel.VoxelType = World.GenerateVoxelType(pos);
+            }
+            return ref voxel;
         }
 
         public bool IsPositionInChunk(float x, float y, float z)
@@ -73,6 +85,7 @@ namespace MilkSpun.CubeWorld
 
         public async Task<Chunk> CreateChunk()
         {
+            InitGameObject();
             await Task.Run(() =>
             {
                 this.LoopVoxel(PopulateVoxel);
@@ -94,10 +107,13 @@ namespace MilkSpun.CubeWorld
             _ = ReGenerateMeshCollider(mesh);
             ClearData();
         }
-
         private void PopulateVoxel(int x, int y, int z)
         {
-            _voxels[x, y, z] = new Voxel(this, x, y, z, VoxelType.Grass);
+            if (!_voxels[x, y, z].Initialize)
+            {
+                _voxels[x, y, z] = new Voxel(this, x, y, z);
+                _voxels[x, y, z].VoxelType = World.GenerateVoxelType(_voxels[x, y, z].LocalPos + LocalPosition);
+            }
             ref var voxel = ref _voxels[x, y, z];
 
             for (var p = 0; p < 6; p++)
@@ -162,12 +178,7 @@ namespace MilkSpun.CubeWorld
         {
             _chunkObject = new GameObject(_chunkCoord.ToString());
             _chunkObject.transform.SetParent(_world.Transform);
-            LocalPosition = _chunkObject.transform.localPosition = new Vector3
-            {
-                x = _chunkCoord.x * ChunkConfig.chunkWidth,
-                y = 0f,
-                z = _chunkCoord.z * ChunkConfig.chunkWidth
-            };
+            _chunkObject.transform.localPosition = LocalPosition;
             _meshFilter = _chunkObject.AddComponent<MeshFilter>();
             _meshRenderer = _chunkObject.AddComponent<MeshRenderer>();
             _meshRenderer.material = GameManager.Instance.ChunkMaterial;
@@ -202,6 +213,7 @@ namespace MilkSpun.CubeWorld
             public readonly int Y;
             public readonly int Z;
             public VoxelType VoxelType;
+            public bool Initialize { get; }
             public Chunk Chunk { get; }
             public Vector3 LocalPos => new(X, Y, Z);
 
@@ -217,6 +229,7 @@ namespace MilkSpun.CubeWorld
                 Z = z;
                 VoxelType = voxelType;
                 Chunk = chunk;
+                Initialize = true;
             }
 
             /// <summary>
@@ -235,6 +248,11 @@ namespace MilkSpun.CubeWorld
                 var voxelFacePos = new Vector3(xCoordPos, Y, zCoordPos) +
                                    ChunkConfig.VoxelFaceOffset[(int)
                                        voxelFaceType];
+             
+                if (!_world.CheckPositionOnGround(voxelFacePos.x, voxelFacePos.y, voxelFacePos.z))
+                {
+                    return false;
+                }
 
                 var x = Mathf.FloorToInt(voxelFacePos.x);
                 var y = Mathf.FloorToInt(voxelFacePos.y);
@@ -254,7 +272,7 @@ namespace MilkSpun.CubeWorld
             public Vector3 GetWorldPosition()
             {
                 var localPos = Chunk.LocalPosition + LocalPos;
-                return _world.Transform.TransformPoint(localPos);
+                return _world.Center + localPos;
             }
 
             /// <summary>

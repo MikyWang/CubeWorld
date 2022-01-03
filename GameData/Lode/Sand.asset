@@ -9,11 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 826a4a7968a864c1fb7f56678f0701d9, type: 3}
-  m_Name: Default
+  m_Script: {fileID: 11500000, guid: 674cf643bd0834622abe7e1bf5e4e148, type: 3}
+  m_Name: Sand
   m_EditorClassIdentifier: 
-  seed: 0
-  chunkWidth: 16
-  chunkHeight: 128
-  textureAtlasSizeInBlocks: 4
-  chunkCoordSize: 20
+  voxelType: 2
+  minHeight: 30
+  maxHeight: 50
+  scale: 0
+  threshold: 0.6
+  offset: 0

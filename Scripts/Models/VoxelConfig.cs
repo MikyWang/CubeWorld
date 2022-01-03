@@ -46,7 +46,8 @@ namespace MilkSpun.CubeWorld.Models
         Sand,
         Stone,
         Ice,
-        Grass
+        Grass,
+        BedRock
     }
 
 }

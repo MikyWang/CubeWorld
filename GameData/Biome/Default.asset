@@ -9,11 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 826a4a7968a864c1fb7f56678f0701d9, type: 3}
+  m_Script: {fileID: 11500000, guid: 147194f663b184b189fad1153f077a85, type: 3}
   m_Name: Default
   m_EditorClassIdentifier: 
-  seed: 0
-  chunkWidth: 16
-  chunkHeight: 128
-  textureAtlasSizeInBlocks: 4
-  chunkCoordSize: 20
+  biomeType: 0
+  solidGroundHeight: 60
+  terrainHeight: 30
+  scale: 0.5
+  lodes:
+  - {fileID: 11400000, guid: 78d7018ccb9ca46e8af41d4868330cf2, type: 2}
+  - {fileID: 11400000, guid: b0b5fca0caa734065ad45201e758c350, type: 2}

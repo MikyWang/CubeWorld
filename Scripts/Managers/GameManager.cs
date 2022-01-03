@@ -28,12 +28,14 @@ namespace MilkSpun.CubeWorld.Managers
         [PreviewField(50f, ObjectFieldAlignment.Right)]
         [SerializeField, Space, Required]
         private Material chunkMaterial;
+        [InlineEditor, SerializeField, Space] private Biome biome;
         [InlineEditor, Space] public ChunkConfig chunkConfig;
         [InlineEditor, Space] public List<VoxelConfig> voxelConfigs;
         public World World { get; private set; }
         public CinemachineFreeLook CmFreeLook { get; private set; }
         public Material ChunkMaterial => chunkMaterial;
         public GameObject OriginalPlayerPrefabPrefab => originalPlayerPrefab;
+        public Biome Biome => biome;
 
         protected override void Awake()
         {
@@ -51,7 +53,7 @@ namespace MilkSpun.CubeWorld.Managers
         {
             var middle = World.MiddleCoord * chunkConfig.chunkWidth +
                          Mathf.FloorToInt((float)chunkConfig.chunkWidth / 2);
-            var pos = new Vector3(middle, chunkConfig.chunkHeight+10f, middle);
+            var pos = new Vector3(middle, chunkConfig.chunkHeight, middle);
             var player = Instantiate(originalPlayerPrefab);
             player.transform.position = pos;
             return player;

@@ -15,9 +15,9 @@ MonoBehaviour:
   voxelType: 5
   isSolid: 1
   page: 0
-  backFaceTexture: 5
-  frontFaceTexture: 5
-  topFaceTexture: 1
-  bottomFaceTexture: 1
-  leftFaceTexture: 5
-  rightFaceTexture: 5
+  backFaceTexture: 4
+  frontFaceTexture: 4
+  topFaceTexture: 0
+  bottomFaceTexture: 0
+  leftFaceTexture: 4
+  rightFaceTexture: 4
