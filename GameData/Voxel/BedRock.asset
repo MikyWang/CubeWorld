@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   voxelType: 6
   isSolid: 1
-  page: 3
-  backFaceTexture: 15
-  frontFaceTexture: 15
-  topFaceTexture: 11
-  bottomFaceTexture: 11
-  leftFaceTexture: 15
-  rightFaceTexture: 15
+  page: 0
+  backFaceTexture: 9
+  frontFaceTexture: 9
+  topFaceTexture: 8
+  bottomFaceTexture: 8
+  leftFaceTexture: 9
+  rightFaceTexture: 9

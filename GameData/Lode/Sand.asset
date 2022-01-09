@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Sand
   m_EditorClassIdentifier: 
   voxelType: 2
-  minHeight: 30
-  maxHeight: 50
-  scale: 0
+  minHeight: 60
+  maxHeight: 90
+  scale: 0.5
   threshold: 0.6
   offset: 0

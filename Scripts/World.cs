@@ -118,10 +118,7 @@ namespace MilkSpun.CubeWorld
         {
             var xChunk = Mathf.FloorToInt(x / ChunkConfig.chunkWidth);
             var zChunk = Mathf.FloorToInt(z / ChunkConfig.chunkWidth);
-            if (_chunks[xChunk, zChunk] is null)
-            {
-                _chunks[xChunk, zChunk] = new Chunk(new ChunkCoord(xChunk, zChunk), this);
-            }
+            _chunks[xChunk, zChunk] ??= new Chunk(new ChunkCoord(xChunk, zChunk), this);
             return ref _chunks[xChunk, zChunk];
         }
 

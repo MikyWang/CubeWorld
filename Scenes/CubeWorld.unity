@@ -175,7 +175,7 @@ Light:
   m_Type: 1
   m_Shape: 0
   m_Color: {r: 1, g: 0.95686275, b: 0.8392157, a: 1}
-  m_Intensity: 5
+  m_Intensity: 3
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -273,7 +273,7 @@ MonoBehaviour:
   priority: 0
   blendDistance: 0
   weight: 1
-  sharedProfile: {fileID: 11400000, guid: ead790d3d9de14c108b0960e22241e24, type: 2}
+  sharedProfile: {fileID: 11400000, guid: 653140ab5c26045a186d625d592850ae, type: 2}
 --- !u!4 &388008177
 Transform:
   m_ObjectHideFlags: 0
@@ -321,6 +321,8 @@ MonoBehaviour:
   cmPrefab: {fileID: 5095571259473596983, guid: 6dbd769883de04f0ebf23e4c8feb165d,
     type: 3}
   originalPlayerPrefab: {fileID: 7379497192990198179, guid: 1c87604a32a2943fd9380475fce41375,
+    type: 3}
+  worldPrefab: {fileID: 5482629307087879459, guid: 5eb2d48baaa1341e988ae26ad546306e,
     type: 3}
   chunkMaterial: {fileID: 2100000, guid: 812fa89cd819945eaa4408de0474f145, type: 2}
   biome: {fileID: 11400000, guid: 3ace683a62d7a4b818095c40bc6676b1, type: 2}
@@ -432,8 +434,8 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.1
-  far clip plane: 500
-  field of view: 60
+  far clip plane: 5000
+  field of view: 40
   orthographic: 0
   orthographic size: 10
   m_Depth: -1
@@ -458,8 +460,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 961739749}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0.3501978, y: -0.32082593, z: 0.12909506, w: -0.87049806}
+  m_LocalPosition: {x: 118.535904, y: 74.06587, z: 118.28344}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

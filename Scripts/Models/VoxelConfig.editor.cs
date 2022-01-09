@@ -19,7 +19,7 @@ namespace MilkSpun.CubeWorld.Models
             if (!isSolid) return;
 
             TexturesPreview = new Texture2D[2];
-            var path = $"{ConstStrings.TextureAssetPath}/Tex2dArray0.asset";
+            var path = $"{ConstStrings.TextureAssetPath}/BlockTextures.asset";
             var array = AssetDatabase.LoadAssetAtPath<Texture2DArray>(path);
 
             TexturesPreview[0] =

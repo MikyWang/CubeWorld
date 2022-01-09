@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -257,7 +258,6 @@ namespace MilkSpun.CubeWorld
                 var x = Mathf.FloorToInt(voxelFacePos.x);
                 var y = Mathf.FloorToInt(voxelFacePos.y);
                 var z = Mathf.FloorToInt(voxelFacePos.z);
-
                 var width = ChunkConfig.WorldSizeInVoxels;
                 var height = ChunkConfig.chunkHeight;
 
@@ -316,7 +316,6 @@ namespace MilkSpun.CubeWorld
                     _ => 0
                 };
             }
-
 
         }
 
