@@ -17,24 +17,37 @@ namespace MilkSpun.CubeWorld.Managers
 {
     public class GameManager : Singleton<GameManager>
     {
+        [HorizontalGroup("game")]
+        [TabGroup("game/player", "主角相关")]
         [Tooltip("CineMachine的预制件")]
         [SerializeField, Space, Required]
         private GameObject cmPrefab;
         [Tooltip("起始玩家的预制件")]
         [PreviewField(50f, ObjectFieldAlignment.Right)]
         [SerializeField, Space, Required]
+        [TabGroup("game/player", "主角相关")]
         private GameObject originalPlayerPrefab;
-        [Tooltip("地形材质")]
-        [PreviewField(50f, ObjectFieldAlignment.Right)]
+        [TabGroup("game/player", "地形相关")]
+        [Tooltip("世界预制体"), Title("预制体")]
         [SerializeField, Space, Required]
-        private Material chunkMaterial;
-        [InlineEditor, SerializeField, Space] private Biome biome;
-        [InlineEditor, Space] public ChunkConfig chunkConfig;
-        [InlineEditor, Space] public List<VoxelConfig> voxelConfigs;
+        private WorldRenderer worldPrefab;
+        [TabGroup("game/player", "地形相关")]
+        [Tooltip("地块预制体")]
+        [SerializeField, Space, Required]
+        private ChunkRenderer chunkPrefab;
+        [TabGroup("game/player", "地形相关")]
+        [InlineEditor, Space, Title("地形配置")]
+        public ChunkConfig chunkConfig;
+        [TabGroup("game/player", "地形相关")]
+        [InlineEditor, SerializeField, Space]
+        private Biome biome;
+        [TabGroup("game/player", "地形相关")]
+        [InlineEditor, Space]
+        public List<VoxelConfig> voxelConfigs;
         public World World { get; private set; }
         public CinemachineFreeLook CmFreeLook { get; private set; }
-        public Material ChunkMaterial => chunkMaterial;
-        public GameObject OriginalPlayerPrefabPrefab => originalPlayerPrefab;
+        public ChunkRenderer ChunkPrefab => chunkPrefab;
+        public WorldRenderer WorldPrefab => worldPrefab;
         public Biome Biome => biome;
 
         protected override void Awake()
@@ -45,7 +58,8 @@ namespace MilkSpun.CubeWorld.Managers
         private async void Start()
         {
             Random.InitState(chunkConfig.seed);
-            Locator.World = World = World is null ? await new World().GenerateWorld() : await World.GenerateWorld();
+            Locator.World = World ??= new World();
+            await World.GenerateWorld();
             SetCamera(GeneratePlayer());
         }
 
@@ -53,8 +67,10 @@ namespace MilkSpun.CubeWorld.Managers
         {
             var middle = World.MiddleCoord * chunkConfig.chunkWidth +
                          Mathf.FloorToInt((float)chunkConfig.chunkWidth / 2);
-            var pos = new Vector3(middle, chunkConfig.chunkHeight, middle);
-            var player = Instantiate(originalPlayerPrefab);
+            var middleChunk = World.Chunks[World.MiddleCoord, World.MiddleCoord];
+            var solidVoxel = middleChunk.GetTopSolidVoxelFromPosition(middle, middle);
+            var pos = new Vector3(middle, solidVoxel.Y + 1, middle);
+            var player = Instantiate(originalPlayerPrefab, pos, Quaternion.identity);
             player.transform.position = pos;
             return player;
         }

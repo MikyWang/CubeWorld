@@ -7,15 +7,13 @@ using MilkSpun.CubeWorld.Managers;
 using MilkSpun.CubeWorld.Models;
 using MilkSpun.CubeWorld.Utils;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace MilkSpun.CubeWorld
 {
+    [System.Serializable]
     public class Chunk
     {
-        private MeshFilter _meshFilter;
-        private MeshRenderer _meshRenderer;
-        private MeshCollider _meshCollider;
-        private GameObject _chunkObject;
         private ChunkCoord _chunkCoord;
 
         private readonly List<Vector3> _vertices;
@@ -24,19 +22,15 @@ namespace MilkSpun.CubeWorld
         private readonly List<Vector2> _uv2; //存放Texture2D Array的索引.
         private int _verticesIndex;
         private readonly Voxel[,,] _voxels;
-        private static World _world;
+        private ChunkRenderer _chunkRenderer;
 
         public Vector3 Position { get; }
         public Vector3 LocalPosition { get; }
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
+        private static ChunkRenderer ChunkPrefab => GameManager.Instance.ChunkPrefab;
+        private static World World => GameManager.Instance.World;
 
-        public bool Active
-        {
-            set => _chunkObject.SetActive(value);
-            get => _chunkObject.activeSelf;
-        }
-
-        public Chunk(ChunkCoord chunkCoord, World world)
+        public Chunk(ChunkCoord chunkCoord)
         {
             _vertices = new List<Vector3>();
             _triangles = new List<int>();
@@ -45,14 +39,13 @@ namespace MilkSpun.CubeWorld
             _voxels = new Voxel[ChunkConfig.chunkWidth, ChunkConfig.chunkHeight,
                 ChunkConfig.chunkWidth];
             _chunkCoord = chunkCoord;
-            _world = world;
             LocalPosition = new Vector3
             {
                 x = _chunkCoord.x * ChunkConfig.chunkWidth,
                 y = 0f,
                 z = _chunkCoord.z * ChunkConfig.chunkWidth
             };
-            Position = _world.Center + LocalPosition;
+            Position = World.Center + LocalPosition;
         }
 
         public ref Voxel GetVoxelFromPosition(float x, float y, float z)
@@ -68,6 +61,27 @@ namespace MilkSpun.CubeWorld
                 voxel.VoxelType = World.GenerateVoxelType(pos);
             }
             return ref voxel;
+        }
+
+        public ref Voxel GetTopSolidVoxelFromPosition(float x, float z)
+        {
+            var xVoxel = Mathf.FloorToInt(x - Position.x);
+            var zVoxel = Mathf.FloorToInt(z - Position.z);
+            for (var y = ChunkConfig.chunkHeight - 1; y >= 0; y--)
+            {
+                ref var voxel = ref _voxels[xVoxel, y, zVoxel];
+                if (!voxel.Initialize)
+                {
+                    voxel = new Voxel(this, xVoxel, y, zVoxel);
+                    var pos = voxel.GetWorldPosition();
+                    voxel.VoxelType = World.GenerateVoxelType(pos);
+                }
+                if (voxel.GetVoxelConfig().isSolid)
+                {
+                    return ref voxel;
+                }
+            }
+            return ref _voxels[xVoxel, 0, zVoxel];
         }
 
         public bool IsPositionInChunk(float x, float y, float z)
@@ -86,17 +100,18 @@ namespace MilkSpun.CubeWorld
 
         public async Task<Chunk> CreateChunk()
         {
-            InitGameObject();
             await Task.Run(() =>
             {
                 this.LoopVoxel(PopulateVoxel);
             });
-            CreateMesh();
+            _chunkRenderer ??= Object.Instantiate(ChunkPrefab, World.Transform);
+            _chunkRenderer.Chunk = this;
             return this;
         }
-        private void CreateMesh()
+
+        public Mesh ConvertToMesh()
         {
-            var mesh = new Mesh
+            return new Mesh
             {
                 name = _chunkCoord.ToString(),
                 vertices = _vertices.ToArray(),
@@ -104,10 +119,8 @@ namespace MilkSpun.CubeWorld
                 uv = _uv.ToArray(),
                 uv2 = _uv2.ToArray()
             };
-            _meshFilter.mesh = mesh;
-            _ = ReGenerateMeshCollider(mesh);
-            ClearData();
         }
+
         private void PopulateVoxel(int x, int y, int z)
         {
             if (!_voxels[x, y, z].Initialize)
@@ -175,21 +188,11 @@ namespace MilkSpun.CubeWorld
 
         }
 
-        private void InitGameObject()
-        {
-            _chunkObject = new GameObject(_chunkCoord.ToString());
-            _chunkObject.transform.SetParent(_world.Transform);
-            _chunkObject.transform.localPosition = LocalPosition;
-            _meshFilter = _chunkObject.AddComponent<MeshFilter>();
-            _meshRenderer = _chunkObject.AddComponent<MeshRenderer>();
-            _meshRenderer.material = GameManager.Instance.ChunkMaterial;
-            _meshCollider = _chunkObject.AddComponent<MeshCollider>();
-        }
-
-        private async void ClearData()
+        public async void ClearData()
         {
             await Task.Run(() =>
             {
+                _verticesIndex = 0;
                 _vertices.Clear();
                 _vertices.TrimExcess();
                 _triangles.Clear();
@@ -199,13 +202,6 @@ namespace MilkSpun.CubeWorld
                 _uv2.Clear();
                 _uv2.TrimExcess();
             });
-        }
-
-        private async Task ReGenerateMeshCollider(Mesh mesh)
-        {
-            await Task.Yield();
-            Physics.BakeMesh(mesh.GetInstanceID(), false);
-            _meshCollider.sharedMesh = mesh;
         }
 
         public struct Voxel
@@ -249,8 +245,8 @@ namespace MilkSpun.CubeWorld
                 var voxelFacePos = new Vector3(xCoordPos, Y, zCoordPos) +
                                    ChunkConfig.VoxelFaceOffset[(int)
                                        voxelFaceType];
-             
-                if (!_world.CheckPositionOnGround(voxelFacePos.x, voxelFacePos.y, voxelFacePos.z))
+
+                if (!World.CheckPositionOnGround(voxelFacePos.x, voxelFacePos.y, voxelFacePos.z))
                 {
                     return false;
                 }
@@ -272,7 +268,7 @@ namespace MilkSpun.CubeWorld
             public Vector3 GetWorldPosition()
             {
                 var localPos = Chunk.LocalPosition + LocalPos;
-                return _world.Center + localPos;
+                return World.Center + localPos;
             }
 
             /// <summary>
@@ -317,6 +313,11 @@ namespace MilkSpun.CubeWorld
                 };
             }
 
+        }
+
+        public override string ToString()
+        {
+            return _chunkCoord.ToString();
         }
 
     }

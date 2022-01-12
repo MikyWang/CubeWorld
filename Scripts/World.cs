@@ -13,7 +13,7 @@ namespace MilkSpun.CubeWorld
 {
     public class World : IWorld
     {
-        public Transform Transform => _worldObject.transform;
+        public Transform Transform => _worldRenderer.transform;
         public Vector3 Position => Transform.position;
         public Chunk[,] Chunks => _chunks;
         public int MiddleCoord { get; }
@@ -21,8 +21,9 @@ namespace MilkSpun.CubeWorld
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
         private static Biome Biome => GameManager.Instance.Biome;
         private static int NoiseResolution => ChunkConfig.chunkWidth;
+        private static WorldRenderer WorldPrefab => GameManager.Instance.WorldPrefab;
 
-        private GameObject _worldObject;
+        private WorldRenderer _worldRenderer;
         private readonly Chunk[,] _chunks;
         public Vector3 Center { get; }
 
@@ -33,15 +34,26 @@ namespace MilkSpun.CubeWorld
             MiddleCoord = Mathf.FloorToInt((float)ChunkConfig.chunkCoordSize / 2);
             _chunks = new Chunk[ChunkConfig.chunkCoordSize, ChunkConfig.chunkCoordSize];
         }
-        public async Task<World> GenerateWorld()
+
+        public async Task RePopulateChunkFromCoord(ChunkCoord chunkCoord)
         {
-            GenerateWorldObject();
-            await PopulateMiddleChunk();
-            _ = PopulateBottomLeftWorld();
-            _ = PopulateBottomRightWorld();
-            _ = PopulateTopLeftWorld();
-            _ = PopulateTopRightWorld();
-            return this;
+            var x = chunkCoord.x;
+            var z = chunkCoord.z;
+            _chunks[x, z] ??= new Chunk(chunkCoord);
+            await _chunks[x, z].CreateChunk();
+        }
+
+        public async Task GenerateWorld()
+        {
+            _worldRenderer ??= Object.Instantiate(WorldPrefab);
+            _worldRenderer.World = this;
+
+            await RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord, MiddleCoord));
+
+            PopulateBottomLeftWorld();
+            PopulateTopLeftWorld();
+            PopulateBottomRightWorld();
+            PopulateTopRightWorld();
         }
 
         public bool CheckPositionOnGround(float x, float y, float z)
@@ -108,83 +120,59 @@ namespace MilkSpun.CubeWorld
             return voxelType;
         }
 
-        private async Task PopulateMiddleChunk()
-        {
-            _chunks[MiddleCoord, MiddleCoord] =
-                await new Chunk(new ChunkCoord(MiddleCoord, MiddleCoord), this).CreateChunk();
-        }
-
-        private ref Chunk GetChunkFromPosition(float x, float z)
+        public ref Chunk GetChunkFromPosition(float x, float z)
         {
             var xChunk = Mathf.FloorToInt(x / ChunkConfig.chunkWidth);
             var zChunk = Mathf.FloorToInt(z / ChunkConfig.chunkWidth);
-            _chunks[xChunk, zChunk] ??= new Chunk(new ChunkCoord(xChunk, zChunk), this);
+            _chunks[xChunk, zChunk] ??= new Chunk(new ChunkCoord(xChunk, zChunk));
             return ref _chunks[xChunk, zChunk];
         }
 
-        private void GenerateWorldObject()
-        {
-            if (_worldObject)
-            {
-                Object.DestroyImmediate(_worldObject);
-            }
-            _worldObject = new GameObject("World")
-            {
-                transform =
-                {
-                    position = Center
-                }
-            };
-        }
-        private async Task PopulateBottomLeftWorld()
+        private async void PopulateBottomLeftWorld()
         {
             for (var z = MiddleCoord; z >= 0; z--)
             {
                 for (var x = MiddleCoord - 1; x >= 0; x--)
                 {
-                    _chunks[x, z] = _chunks[x, z] is null
-                        ? await new Chunk(new ChunkCoord(x, z), this).CreateChunk()
-                        : await _chunks[x, z].CreateChunk();
+                    await RePopulateChunkFromCoord(new ChunkCoord(x, z));
                 }
             }
         }
 
-        private async Task PopulateTopLeftWorld()
+        private async void PopulateTopLeftWorld()
         {
             for (var z = MiddleCoord + 1; z < ChunkConfig.chunkCoordSize; z++)
             {
                 for (var x = MiddleCoord; x >= 0; x--)
                 {
-                    _chunks[x, z] = _chunks[x, z] is null
-                        ? await new Chunk(new ChunkCoord(x, z), this).CreateChunk()
-                        : await _chunks[x, z].CreateChunk();
+                    await RePopulateChunkFromCoord(new ChunkCoord(x, z));
                 }
             }
         }
-        private async Task PopulateTopRightWorld()
+        private async void PopulateTopRightWorld()
         {
             for (var z = MiddleCoord; z < ChunkConfig.chunkCoordSize; z++)
             {
                 for (var x = MiddleCoord + 1; x < ChunkConfig.chunkCoordSize; x++)
                 {
-                    _chunks[x, z] = _chunks[x, z] is null
-                        ? await new Chunk(new ChunkCoord(x, z), this).CreateChunk()
-                        : await _chunks[x, z].CreateChunk();
+                    await RePopulateChunkFromCoord(new ChunkCoord(x, z));
                 }
             }
         }
-        private async Task PopulateBottomRightWorld()
+        private async void PopulateBottomRightWorld()
         {
             for (var z = MiddleCoord - 1; z >= 0; z--)
             {
                 for (var x = MiddleCoord; x < ChunkConfig.chunkCoordSize; x++)
                 {
-                    _chunks[x, z] = _chunks[x, z] is null
-                        ? await new Chunk(new ChunkCoord(x, z), this).CreateChunk()
-                        : await _chunks[x, z].CreateChunk();
+                    await RePopulateChunkFromCoord(new ChunkCoord(x, z));
                 }
             }
         }
 
+        public override string ToString()
+        {
+            return $"World{Center}";
+        }
     }
 }

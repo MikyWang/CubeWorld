@@ -17,6 +17,12 @@ namespace MilkSpun.CubeWorld.Models
             this.z = z;
         }
 
+        public ChunkCoord(float x, float z)
+        {
+            this.x = Mathf.FloorToInt(x);
+            this.z = Mathf.FloorToInt(z);
+        }
+        
         public override string ToString()
         {
             return $"ChunkCoord ({x},{z}) ";
