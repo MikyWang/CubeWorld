@@ -15,7 +15,7 @@ using Random = UnityEngine.Random;
 
 namespace MilkSpun.CubeWorld.Managers
 {
-    public class GameManager : Singleton<GameManager>
+    public partial class GameManager : Singleton<GameManager>
     {
         [HorizontalGroup("game")]
         [TabGroup("game/player", "主角相关")]
@@ -38,9 +38,10 @@ namespace MilkSpun.CubeWorld.Managers
         [TabGroup("game/player", "地形相关")]
         [InlineEditor, Space, Title("地形配置")]
         public ChunkConfig chunkConfig;
+        [FormerlySerializedAs("biome")]
         [TabGroup("game/player", "地形相关")]
         [InlineEditor, SerializeField, Space]
-        private Biome biome;
+        private List<Biome> biomes;
         [TabGroup("game/player", "地形相关")]
         [InlineEditor, Space]
         public List<VoxelConfig> voxelConfigs;
@@ -48,7 +49,7 @@ namespace MilkSpun.CubeWorld.Managers
         public CinemachineFreeLook CmFreeLook { get; private set; }
         public ChunkRenderer ChunkPrefab => chunkPrefab;
         public WorldRenderer WorldPrefab => worldPrefab;
-        public Biome Biome => biome;
+        public List<Biome> Biomes => biomes;
 
         protected override void Awake()
         {
@@ -62,7 +63,7 @@ namespace MilkSpun.CubeWorld.Managers
             await World.GenerateWorld();
             SetCamera(GeneratePlayer());
         }
-
+        
         private GameObject GeneratePlayer()
         {
             var middle = World.MiddleCoord * chunkConfig.chunkWidth +

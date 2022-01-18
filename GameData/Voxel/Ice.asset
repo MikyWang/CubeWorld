@@ -10,15 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b01867561f57246c2975b078bf66682c, type: 3}
-  m_Name: Dirt
+  m_Name: Ice
   m_EditorClassIdentifier: 
-  voxelType: 1
-  isSolid: 1
-  blockConfig: {fileID: 11400000, guid: b91967fedf3994e4e84b9cc1fb0eec54, type: 2}
+  voxelType: 0
+  isSolid: 0
+  isTransparency: 0
+  blockConfig: {fileID: 0}
   page: 0
-  backFaceTexture: 5
-  frontFaceTexture: 5
-  topFaceTexture: 1
-  bottomFaceTexture: 1
-  leftFaceTexture: 5
-  rightFaceTexture: 5
+  backFaceTexture: 0
+  frontFaceTexture: 0
+  topFaceTexture: 0
+  bottomFaceTexture: 0
+  leftFaceTexture: 0
+  rightFaceTexture: 0

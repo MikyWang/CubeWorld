@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Threading;
 using MilkSpun.Common;
 using MilkSpun.CubeWorld.Managers;
 using MilkSpun.CubeWorld.Models;
@@ -11,19 +13,14 @@ using Object = UnityEngine.Object;
 
 namespace MilkSpun.CubeWorld
 {
-    [System.Serializable]
     public class Chunk
     {
-        private ChunkCoord _chunkCoord;
-
-        private readonly List<Vector3> _vertices;
-        private readonly List<int> _triangles;
-        private readonly List<Vector2> _uv;
-        private readonly List<Vector2> _uv2; //存放Texture2D Array的索引.
-        private int _verticesIndex;
+        public ChunkCoord ChunkCoord;
+        private readonly ChunkMeshData _meshData;
         private readonly Voxel[,,] _voxels;
         private ChunkRenderer _chunkRenderer;
-
+        private int _verticesIndex;
+        private Task _populateTask;
         public Vector3 Position { get; }
         public Vector3 LocalPosition { get; }
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
@@ -32,18 +29,14 @@ namespace MilkSpun.CubeWorld
 
         public Chunk(ChunkCoord chunkCoord)
         {
-            _vertices = new List<Vector3>();
-            _triangles = new List<int>();
-            _uv = new List<Vector2>();
-            _uv2 = new List<Vector2>();
-            _voxels = new Voxel[ChunkConfig.chunkWidth, ChunkConfig.chunkHeight,
-                ChunkConfig.chunkWidth];
-            _chunkCoord = chunkCoord;
+            _meshData = new ChunkMeshData();
+            _voxels = new Voxel[ChunkConfig.chunkWidth, ChunkConfig.chunkHeight, ChunkConfig.chunkWidth];
+            ChunkCoord = chunkCoord;
             LocalPosition = new Vector3
             {
-                x = _chunkCoord.x * ChunkConfig.chunkWidth,
+                x = ChunkCoord.x * ChunkConfig.chunkWidth,
                 y = 0f,
-                z = _chunkCoord.z * ChunkConfig.chunkWidth
+                z = ChunkCoord.z * ChunkConfig.chunkWidth
             };
             Position = World.Center + LocalPosition;
         }
@@ -98,26 +91,44 @@ namespace MilkSpun.CubeWorld
                    zVoxel <= ChunkConfig.chunkWidth - 1;
         }
 
-        public async Task<Chunk> CreateChunk()
+        public async Task CreateChunk()
         {
-            await Task.Run(() =>
+            if (_populateTask is not null)
             {
-                this.LoopVoxel(PopulateVoxel);
-            });
-            _chunkRenderer ??= Object.Instantiate(ChunkPrefab, World.Transform);
-            _chunkRenderer.Chunk = this;
-            return this;
+                await _populateTask;
+            }
+            _populateTask = new Func<Task>(async () =>
+            {
+                await Task.Run(() =>
+                {
+                    for (var y = 0; y < ChunkConfig.chunkHeight; y++)
+                    {
+                        for (var z = 0; z < ChunkConfig.chunkWidth; z++)
+                        {
+                            for (var x = 0; x < ChunkConfig.chunkWidth; x++)
+                            {
+                                PopulateVoxel(x, y, z);
+                            }
+                        }
+                    }
+                });
+                _chunkRenderer ??= Object.Instantiate(ChunkPrefab, World.Transform);
+                _chunkRenderer.Chunk = this;
+                _chunkRenderer.Refresh();
+            })();
+            await _populateTask;
         }
 
         public Mesh ConvertToMesh()
         {
             return new Mesh
             {
-                name = _chunkCoord.ToString(),
-                vertices = _vertices.ToArray(),
-                triangles = _triangles.ToArray(),
-                uv = _uv.ToArray(),
-                uv2 = _uv2.ToArray()
+                name = ChunkCoord.ToString(),
+                vertices = _meshData.vertices.ToArray(),
+                normals = _meshData.normals.ToArray(),
+                triangles = _meshData.triangles.ToArray(),
+                uv = _meshData.uv.ToArray(),
+                uv2 = _meshData.uv2.ToArray()
             };
         }
 
@@ -130,34 +141,33 @@ namespace MilkSpun.CubeWorld
             }
             ref var voxel = ref _voxels[x, y, z];
 
-            for (var p = 0; p < 6; p++)
+            var faces = Common.Utils.GetEnumValues<VoxelFaceType>();
+            var faceConfigs = voxel.GetVoxelConfig().blockConfig.faceConfigs;
+
+            foreach (var faceType in faces)
             {
-                if (voxel.IsPlaneInVisible((VoxelFaceType)p))
+                if (voxel.IsPlaneInVisible(faceType))
                 {
                     continue;
                 }
-
-                for (var i = 0; i < 4; i++)
+                var faceConfig = faceConfigs[(int)faceType];
+                foreach (var vert in faceConfig.vertices)
                 {
-                    var vertIndex = ChunkConfig.VoxelTris[p, i];
-                    _vertices.Add(ChunkConfig.VoxelVerts[vertIndex] + voxel.LocalPos);
+                    _meshData.vertices.Add(vert + voxel.LocalPos);
+                    _meshData.normals.Add(ChunkConfig.VoxelFaceOffset[faceType]);
                 }
+                var textureID = voxel.GetTextureID(faceType, ChunkConfig.TextureAtlasSize);
+                AddTexture(textureID, faceConfig.uv);
 
-                //TODO 根据噪声图生成不同的Voxel并显示.
-                var textureID = voxel.GetTextureID((VoxelFaceType)p, ChunkConfig.TextureAtlasSize);
-                AddTexture(textureID);
-
-                _triangles.Add(_verticesIndex);
-                _triangles.Add(_verticesIndex + 1);
-                _triangles.Add(_verticesIndex + 2);
-                _triangles.Add(_verticesIndex + 2);
-                _triangles.Add(_verticesIndex + 1);
-                _triangles.Add(_verticesIndex + 3);
-                _verticesIndex += 4;
+                foreach (var triangle in faceConfig.triangles)
+                {
+                    _meshData.triangles.Add(_verticesIndex + triangle);
+                }
+                _verticesIndex += faceConfig.vertices.Count;
             }
         }
 
-        private void AddTexture(int textureID)
+        private void AddTexture(int textureID, IEnumerable<Vector2> uvs)
         {
             var textureAtlasSizeInBlocks = ChunkConfig.textureAtlasSizeInBlocks;
             var normalizedBlockTextureSize = ChunkConfig.NormalizedBlockTextureSize;
@@ -172,20 +182,30 @@ namespace MilkSpun.CubeWorld
             var x = col * normalizedBlockTextureSize;
             var y = invertedRow * normalizedBlockTextureSize;
 
-            const float uvOffset = 0.001f;
-            _uv.Add(new Vector2(x + uvOffset, y + uvOffset));
-            _uv.Add(new Vector2(x + uvOffset, y + normalizedBlockTextureSize - uvOffset));
-            _uv.Add(new Vector2(x + normalizedBlockTextureSize - uvOffset, y + uvOffset));
-            _uv.Add(new Vector2(x + normalizedBlockTextureSize - uvOffset,
-                y + normalizedBlockTextureSize - uvOffset));
+            const float uvOffset = 0.005f;
+            foreach (var uv in uvs)
+            {
+                var ux = x + uv.x * normalizedBlockTextureSize + (1 - 2 * uv.x) * uvOffset;
+                var uy = y + uv.y * normalizedBlockTextureSize + (1 - 2 * uv.y) * uvOffset;
+                _meshData.uv.Add(new Vector2(ux, uy));
+            }
 
             var index = textureID / textureAtlasSize;
             var v = index % 8;
             for (var i = 0; i < 4; i++)
             {
-                _uv2.Add(new Vector2(v, v));
+                _meshData.uv2.Add(new Vector2(v, v));
             }
 
+        }
+        public async void Refresh()
+        {
+            if (!_populateTask.IsCompleted)
+            {
+                await _populateTask;
+            }
+            await CreateChunk();
+            _chunkRenderer.Refresh();
         }
 
         public async void ClearData()
@@ -193,14 +213,7 @@ namespace MilkSpun.CubeWorld
             await Task.Run(() =>
             {
                 _verticesIndex = 0;
-                _vertices.Clear();
-                _vertices.TrimExcess();
-                _triangles.Clear();
-                _triangles.TrimExcess();
-                _uv.Clear();
-                _uv.TrimExcess();
-                _uv2.Clear();
-                _uv2.TrimExcess();
+                _meshData.Clear();
             });
         }
 
@@ -238,18 +251,21 @@ namespace MilkSpun.CubeWorld
             {
                 var voxelConfig = GetVoxelConfig();
                 if (!voxelConfig.isSolid) return true;
+                // if (voxelConfig.isTransparency) return false;
 
                 var xCoordPos = X + Chunk.LocalPosition.x;
                 var zCoordPos = Z + Chunk.LocalPosition.z;
 
-                var voxelFacePos = new Vector3(xCoordPos, Y, zCoordPos) +
-                                   ChunkConfig.VoxelFaceOffset[(int)
-                                       voxelFaceType];
+                var voxelFacePos = new Vector3(xCoordPos, Y, zCoordPos) + ChunkConfig.VoxelFaceOffset[voxelFaceType];
 
                 if (!World.CheckPositionOnGround(voxelFacePos.x, voxelFacePos.y, voxelFacePos.z))
                 {
                     return false;
                 }
+
+                ref var chunk = ref World.GetChunkFromPosition(voxelFacePos.x, voxelFacePos.z);
+                ref var voxel = ref chunk.GetVoxelFromPosition(voxelFacePos.x, voxelFacePos.y, voxelFacePos.z);
+                if (voxel.GetVoxelConfig().isTransparency) return false;
 
                 var x = Mathf.FloorToInt(voxelFacePos.x);
                 var y = Mathf.FloorToInt(voxelFacePos.y);
@@ -317,7 +333,7 @@ namespace MilkSpun.CubeWorld
 
         public override string ToString()
         {
-            return _chunkCoord.ToString();
+            return ChunkCoord.ToString();
         }
 
     }

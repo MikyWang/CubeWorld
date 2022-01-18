@@ -9,11 +9,11 @@ namespace MilkSpun.CubeWorld.Models
     [CreateAssetMenu(fileName = "", menuName = "MilkSpun/创建VoxelConfig")]
     public partial class VoxelConfig : ScriptableObject
     {
-        [FormerlySerializedAs("voxelMapType")] [Title("基本设置")] [Tooltip("方块类型")] public VoxelType voxelType;
+        [Title("基本设置")] [Tooltip("方块类型")] public VoxelType voxelType;
         [Tooltip("是否为固体.")] public bool isSolid;
-        [Title("纹理ID")]
-        [Tooltip("使用第几页纹理")]
-        [Range(0, 8)]
+        [Tooltip("是否是透明")] public bool isTransparency;
+        public BlockConfig blockConfig;
+        [Title("纹理ID"), Tooltip("使用第几页纹理"), Range(0, 8)]
         public int page;
         [Tooltip("后面纹理"), OnValueChanged("ShowTexture")]
         public int backFaceTexture;
@@ -47,7 +47,9 @@ namespace MilkSpun.CubeWorld.Models
         Stone,
         Ice,
         Grass,
-        BedRock
+        BedRock,
+        Stump,
+        Leaf
     }
 
 }

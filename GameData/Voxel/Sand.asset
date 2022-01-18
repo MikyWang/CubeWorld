@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   voxelType: 2
   isSolid: 1
+  blockConfig: {fileID: 11400000, guid: b91967fedf3994e4e84b9cc1fb0eec54, type: 2}
   page: 0
-  backFaceTexture: 5
-  frontFaceTexture: 5
-  topFaceTexture: 4
-  bottomFaceTexture: 4
-  leftFaceTexture: 5
-  rightFaceTexture: 5
+  backFaceTexture: 6
+  frontFaceTexture: 6
+  topFaceTexture: 2
+  bottomFaceTexture: 2
+  leftFaceTexture: 6
+  rightFaceTexture: 6

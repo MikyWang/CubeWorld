@@ -10,12 +10,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 147194f663b184b189fad1153f077a85, type: 3}
-  m_Name: Default
+  m_Name: Desert
   m_EditorClassIdentifier: 
-  biomeType: 0
-  solidGroundHeight: 60
-  terrainHeight: 30
-  scale: 0.5
+  biomeType: 1
+  scale: 0.1
+  offset: 500
+  surfaceVoxelType: 2
+  subsurfaceVoxelType: 2
+  terrainScale: 3
+  solidGroundHeight: 29
+  terrainHeight: 15
   lodes:
   - {fileID: 11400000, guid: 78d7018ccb9ca46e8af41d4868330cf2, type: 2}
   - {fileID: 11400000, guid: b0b5fca0caa734065ad45201e758c350, type: 2}
+  hasTree: 0
+  treeZoneScale: 0.5
+  treeZoneThreshold: 0.15
+  treeScale: 25
+  treeThreshold: 0.85
+  maxHeight: 5
+  minHeight: 2

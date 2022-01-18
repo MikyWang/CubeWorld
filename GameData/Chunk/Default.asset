@@ -16,4 +16,4 @@ MonoBehaviour:
   chunkWidth: 16
   chunkHeight: 128
   textureAtlasSizeInBlocks: 4
-  chunkCoordSize: 15
+  chunkCoordSize: 5

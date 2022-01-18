@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b01867561f57246c2975b078bf66682c, type: 3}
-  m_Name: Dirt
+  m_Name: Stump
   m_EditorClassIdentifier: 
-  voxelType: 1
+  voxelType: 7
   isSolid: 1
   blockConfig: {fileID: 11400000, guid: b91967fedf3994e4e84b9cc1fb0eec54, type: 2}
   page: 0
-  backFaceTexture: 5
-  frontFaceTexture: 5
-  topFaceTexture: 1
-  bottomFaceTexture: 1
-  leftFaceTexture: 5
-  rightFaceTexture: 5
+  backFaceTexture: 14
+  frontFaceTexture: 14
+  topFaceTexture: 10
+  bottomFaceTexture: 10
+  leftFaceTexture: 14
+  rightFaceTexture: 14

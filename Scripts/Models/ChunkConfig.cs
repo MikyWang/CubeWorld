@@ -30,43 +30,16 @@ namespace MilkSpun.CubeWorld.Models
         public int TextureAtlasSize => textureAtlasSizeInBlocks * textureAtlasSizeInBlocks;
 
         /// <summary>
-        ///每个Cube的顶点数据
-        /// </summary>
-        public static readonly Vector3[] VoxelVerts =
-        {
-            new(0f, 0f, 0f),
-            new(1f, 0f, 0f),
-            new(1f, 1f, 0f),
-            new(0f, 1f, 0f),
-            new(0f, 0f, 1f),
-            new(1f, 0f, 1f),
-            new(1f, 1f, 1f),
-            new(0f, 1f, 1f)
-        };
-        /// <summary>
-        /// Cube每个面的三角形的顶点索引
-        /// </summary>
-        public static readonly int[,] VoxelTris =
-        {
-            { 0, 3, 1, 2 }, //后面
-            { 5, 6, 4, 7 }, //前面
-            { 3, 7, 2, 6 }, //上面
-            { 1, 5, 0, 4 }, //下面
-            { 4, 7, 0, 3 }, //左面
-            { 1, 2, 5, 6 }  //右面
-        };
-
-        /// <summary>
         /// Voxel周围的面的相对位置
         /// </summary>
-        public static readonly Vector3[] VoxelFaceOffset =
+        public static readonly Dictionary<VoxelFaceType, Vector3> VoxelFaceOffset = new()
         {
-            new(0f, 0f, -1f), //后面
-            new(0f, 0f, 1f),  //前面
-            new(0f, 1f, 0f),  //上面
-            new(0f, -1f, 0f), //下面
-            new(-1f, 0f, 0f), //左面
-            new(1f, 0f, 0f),  //右面
+            { VoxelFaceType.Back, Vector3.back },
+            { VoxelFaceType.Front, Vector3.forward },
+            { VoxelFaceType.Top, Vector3.up },
+            { VoxelFaceType.Bottom, Vector3.down },
+            { VoxelFaceType.Left, Vector3.left },
+            { VoxelFaceType.Right, Vector3.right },
         };
     }
 }

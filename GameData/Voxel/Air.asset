@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b01867561f57246c2975b078bf66682c, type: 3}
   m_Name: Air
   m_EditorClassIdentifier: 
-  voxelMapType: 0
+  voxelType: 0
   isSolid: 0
+  blockConfig: {fileID: 11400000, guid: b91967fedf3994e4e84b9cc1fb0eec54, type: 2}
   page: 0
   backFaceTexture: 0
   frontFaceTexture: 0

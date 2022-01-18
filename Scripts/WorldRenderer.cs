@@ -18,6 +18,5 @@ namespace MilkSpun.CubeWorld
             transform.position = World.Center;
             gameObject.name = World.ToString();
         }
-
     }
 }
