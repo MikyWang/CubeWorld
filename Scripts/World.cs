@@ -108,7 +108,7 @@ namespace MilkSpun.CubeWorld
                     strongestWeight = weight;
                     biome = bo;
                 }
-                var height = NoiseGenerator.Get2DPerlinNoise(noisePos, 0, bo.terrainScale, ChunkConfig.chunkWidth) * weight * bo.terrainHeight;
+                var height = NoiseGenerator.Get2DPerlinNoiseWithWaves(noisePos, 0, bo.terrainScale,bo.waves, ChunkConfig.chunkWidth) * weight * bo.terrainHeight;
                 if (height <= 0) continue;
                 sumHeight += height;
                 count++;

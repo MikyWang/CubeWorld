@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using MilkSpun.Common.Models;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -18,6 +19,7 @@ namespace MilkSpun.CubeWorld.Models
         [Tooltip("地表下Voxel")]
         public VoxelType subsurfaceVoxelType;
         [TabGroup("地形")] [Tooltip("地表Voxel")] public float terrainScale;
+        [TabGroup("地形")] [Tooltip("Waves")] public List<Wave> waves;
         [TabGroup("地形")] [Tooltip("可见块平地高度")] public int solidGroundHeight;
         [TabGroup("地形")] [Tooltip("地形基本高度")] public int terrainHeight;
         [TabGroup("地心")] [InlineEditor] public Lode[] lodes;

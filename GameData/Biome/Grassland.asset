@@ -18,6 +18,16 @@ MonoBehaviour:
   surfaceVoxelType: 5
   subsurfaceVoxelType: 1
   terrainScale: 0.15
+  waves:
+  - seed: 2136
+    frequency: 2
+    amplitude: 3
+  - seed: 5436
+    frequency: 1
+    amplitude: 0.5
+  - seed: 7654
+    frequency: 0.5
+    amplitude: 5
   solidGroundHeight: 30
   terrainHeight: 20
   lodes:

@@ -7,11 +7,10 @@ using UnityEngine.Serialization;
 namespace MilkSpun.CubeWorld
 {
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-    public class ChunkRenderer : MonoBehaviour
+    public partial class ChunkRenderer : MonoBehaviour
     {
         private MeshFilter _meshFilter;
         private MeshCollider _meshCollider;
-
         public Chunk Chunk { get; set; }
 
         [OnInspectorInit]
@@ -36,12 +35,6 @@ namespace MilkSpun.CubeWorld
             _meshCollider.sharedMesh = mesh;
         }
 
-        [Button("预览地块")]
-        private async void TestChunk()
-        {
-            Chunk= new Chunk(new ChunkCoord(5, 5));
-            await Chunk.CreateChunk();
-            Refresh();
-        }
+       
     }
 }
