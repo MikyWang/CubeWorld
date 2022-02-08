@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b01867561f57246c2975b078bf66682c, type: 3}
   m_Name: Ice
   m_EditorClassIdentifier: 
-  voxelType: 0
-  isSolid: 0
+  voxelType: 4
+  isSolid: 1
   isTransparency: 0
-  blockConfig: {fileID: 0}
+  blockConfig: {fileID: 11400000, guid: b91967fedf3994e4e84b9cc1fb0eec54, type: 2}
   page: 0
-  backFaceTexture: 0
-  frontFaceTexture: 0
-  topFaceTexture: 0
-  bottomFaceTexture: 0
-  leftFaceTexture: 0
-  rightFaceTexture: 0
+  backFaceTexture: 13
+  frontFaceTexture: 13
+  topFaceTexture: 9
+  bottomFaceTexture: 9
+  leftFaceTexture: 13
+  rightFaceTexture: 13

@@ -20,7 +20,6 @@ namespace MilkSpun.CubeWorld
         private readonly Voxel[,,] _voxels;
         private ChunkRenderer _chunkRenderer;
         private int _verticesIndex;
-        private Task _populateTask;
         public Vector3 Position { get; }
         public Vector3 LocalPosition { get; }
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
@@ -91,32 +90,19 @@ namespace MilkSpun.CubeWorld
                    zVoxel <= ChunkConfig.chunkWidth - 1;
         }
 
-        public async Task CreateChunk()
+        public void CreateChunk()
         {
-            if (_populateTask is not null)
+            for (var y = 0; y < ChunkConfig.chunkHeight; y++)
             {
-                await _populateTask;
-            }
-            _populateTask = new Func<Task>(async () =>
-            {
-                await Task.Run(() =>
+                for (var z = 0; z < ChunkConfig.chunkWidth; z++)
                 {
-                    for (var y = 0; y < ChunkConfig.chunkHeight; y++)
+                    for (var x = 0; x < ChunkConfig.chunkWidth; x++)
                     {
-                        for (var z = 0; z < ChunkConfig.chunkWidth; z++)
-                        {
-                            for (var x = 0; x < ChunkConfig.chunkWidth; x++)
-                            {
-                                PopulateVoxel(x, y, z);
-                            }
-                        }
+                        PopulateVoxel(x, y, z);
                     }
-                });
-                _chunkRenderer ??= Object.Instantiate(ChunkPrefab, World.Transform);
-                _chunkRenderer.Chunk = this;
-                _chunkRenderer.Refresh();
-            })();
-            await _populateTask;
+                }
+            }
+            _ = Refresh();
         }
 
         public Mesh ConvertToMesh()
@@ -146,7 +132,7 @@ namespace MilkSpun.CubeWorld
 
             foreach (var faceType in faces)
             {
-                if (voxel.IsPlaneInVisible(faceType))
+                if (voxel.IsPlaneInvisible(faceType))
                 {
                     continue;
                 }
@@ -198,23 +184,21 @@ namespace MilkSpun.CubeWorld
             }
 
         }
-        public async void Refresh()
+        public async Task Refresh()
         {
-            if (!_populateTask.IsCompleted)
+            await GameManager.RunInUnitySyncContext(() =>
             {
-                await _populateTask;
-            }
-            await CreateChunk();
-            _chunkRenderer.Refresh();
+                _chunkRenderer ??= Object.Instantiate(ChunkPrefab, World.Transform);
+                _chunkRenderer.Chunk = this;
+                _chunkRenderer.Refresh();
+            });
+            ClearData();
         }
 
-        public async void ClearData()
+        public void ClearData()
         {
-            await Task.Run(() =>
-            {
-                _verticesIndex = 0;
-                _meshData.Clear();
-            });
+            _verticesIndex = 0;
+            _meshData.Clear();
         }
 
         public struct Voxel
@@ -247,11 +231,10 @@ namespace MilkSpun.CubeWorld
             /// </summary>
             /// <param name="voxelFaceType">Voxel的朝向 <see cref="VoxelFaceType"/></param>
             /// <returns></returns>
-            public bool IsPlaneInVisible(VoxelFaceType voxelFaceType)
+            public bool IsPlaneInvisible(VoxelFaceType voxelFaceType)
             {
                 var voxelConfig = GetVoxelConfig();
                 if (!voxelConfig.isSolid) return true;
-                // if (voxelConfig.isTransparency) return false;
 
                 var xCoordPos = X + Chunk.LocalPosition.x;
                 var zCoordPos = Z + Chunk.LocalPosition.z;
@@ -263,8 +246,8 @@ namespace MilkSpun.CubeWorld
                     return false;
                 }
 
-                ref var chunk = ref World.GetChunkFromPosition(voxelFacePos.x, voxelFacePos.z);
-                ref var voxel = ref chunk.GetVoxelFromPosition(voxelFacePos.x, voxelFacePos.y, voxelFacePos.z);
+                var chunk = World.GetChunkFromPosition(voxelFacePos.x, voxelFacePos.z);
+                var voxel = chunk.GetVoxelFromPosition(voxelFacePos.x, voxelFacePos.y, voxelFacePos.z);
                 if (voxel.GetVoxelConfig().isTransparency) return false;
 
                 var x = Mathf.FloorToInt(voxelFacePos.x);

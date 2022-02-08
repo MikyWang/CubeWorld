@@ -40,22 +40,41 @@ namespace MilkSpun.CubeWorld
             _worldRenderer.World = this;
         }
 
-        public async Task RePopulateChunkFromCoord(ChunkCoord chunkCoord)
+        public void RePopulateChunkFromCoord(ChunkCoord chunkCoord)
         {
             var x = chunkCoord.x;
             var z = chunkCoord.z;
+
+            if (x < 0 || x >= ChunkConfig.chunkCoordSize || z < 0 || z >= ChunkConfig.chunkCoordSize) return;
+
             _chunks[x, z] ??= new Chunk(chunkCoord);
-            await _chunks[x, z].CreateChunk();
+            _chunks[x, z].CreateChunk();
         }
 
-        public async Task GenerateWorld()
+        public void GenerateWorld()
         {
-            await RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord, MiddleCoord));
-            PopulateBottomLeftWorld();
-            PopulateTopLeftWorld();
-            PopulateBottomRightWorld();
-            PopulateTopRightWorld();
-            UpdateChunks();
+            RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord, MiddleCoord));
+            _ = Task.Run(() =>
+            {
+                for (var mc = 1; mc < MiddleCoord + 1; mc++)
+                {
+                    var mcSync = mc;
+                    Parallel.For(0, mcSync + 1, i =>
+                    {
+                        if (i > 0 && i < mcSync)
+                        {
+                            RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord - i, MiddleCoord + mcSync));
+                            RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord + mcSync, MiddleCoord + i));
+                            RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord - mcSync, MiddleCoord - i));
+                            RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord + i, MiddleCoord - mcSync));
+                        }
+                        RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord + i, MiddleCoord + mcSync));
+                        RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord - mcSync, MiddleCoord + i));
+                        RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord + mcSync, MiddleCoord - i));
+                        RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord - i, MiddleCoord - mcSync));
+                    });
+                }
+            });
         }
 
         public static bool IsPositionOnWorld(float x, float z)
@@ -83,7 +102,7 @@ namespace MilkSpun.CubeWorld
 
             if (!chunk.IsPositionInChunk(x, y, z)) return false;
 
-            ref var voxel = ref chunk.GetVoxelFromPosition(x, y, z);
+            var voxel = chunk.GetVoxelFromPosition(x, y, z);
             return voxel.GetVoxelConfig().isSolid;
         }
 
@@ -108,7 +127,7 @@ namespace MilkSpun.CubeWorld
                     strongestWeight = weight;
                     biome = bo;
                 }
-                var height = NoiseGenerator.Get2DPerlinNoiseWithWaves(noisePos, 0, bo.terrainScale,bo.waves, ChunkConfig.chunkWidth) * weight * bo.terrainHeight;
+                var height = NoiseGenerator.Get2DPerlinNoiseWithWaves(noisePos, 0, bo.terrainScale, bo.waves, ChunkConfig.chunkWidth) * weight * bo.terrainHeight;
                 if (height <= 0) continue;
                 sumHeight += height;
                 count++;
@@ -145,8 +164,7 @@ namespace MilkSpun.CubeWorld
                 {
                     if (y < lode.minHeight || y > lode.maxHeight) continue;
 
-                    if (NoiseGenerator.Get3DPerlinNoise(pos, lode.offset, lode.scale,
-                            lode.threshold, 1))
+                    if (NoiseGenerator.Get3DPerlinNoise(pos, lode.offset, lode.scale, lode.threshold, 1))
                     {
                         voxelType = lode.voxelType;
                     }
@@ -170,52 +188,9 @@ namespace MilkSpun.CubeWorld
                 if (_chunksToUpdate.Count > 0)
                 {
                     var chunk = _chunksToUpdate.Dequeue();
-                    await RePopulateChunkFromCoord(chunk.ChunkCoord);
+                    RePopulateChunkFromCoord(chunk.ChunkCoord);
                 }
                 await Task.Delay(100);
-            }
-
-        }
-
-        private async void PopulateBottomLeftWorld()
-        {
-            for (var z = MiddleCoord; z >= 0; z--)
-            {
-                for (var x = MiddleCoord - 1; x >= 0; x--)
-                {
-                    await RePopulateChunkFromCoord(new ChunkCoord(x, z));
-                }
-            }
-        }
-
-        private async void PopulateTopLeftWorld()
-        {
-            for (var z = MiddleCoord + 1; z < ChunkConfig.chunkCoordSize; z++)
-            {
-                for (var x = MiddleCoord; x >= 0; x--)
-                {
-                    await RePopulateChunkFromCoord(new ChunkCoord(x, z));
-                }
-            }
-        }
-        private async void PopulateTopRightWorld()
-        {
-            for (var z = MiddleCoord; z < ChunkConfig.chunkCoordSize; z++)
-            {
-                for (var x = MiddleCoord + 1; x < ChunkConfig.chunkCoordSize; x++)
-                {
-                    await RePopulateChunkFromCoord(new ChunkCoord(x, z));
-                }
-            }
-        }
-        private async void PopulateBottomRightWorld()
-        {
-            for (var z = MiddleCoord - 1; z >= 0; z--)
-            {
-                for (var x = MiddleCoord; x < ChunkConfig.chunkCoordSize; x++)
-                {
-                    await RePopulateChunkFromCoord(new ChunkCoord(x, z));
-                }
             }
         }
 

@@ -13,17 +13,27 @@ MonoBehaviour:
   m_Name: Snow
   m_EditorClassIdentifier: 
   biomeType: 0
-  scale: 0.25
-  offset: 300
-  surfaceVoxelType: 5
-  subsurfaceVoxelType: 1
-  terrainScale: 0.15
+  scale: 4
+  offset: 800
+  surfaceVoxelType: 4
+  subsurfaceVoxelType: 4
+  terrainScale: 3
+  waves:
+  - seed: 2136
+    frequency: 2
+    amplitude: 3
+  - seed: 5436
+    frequency: 1
+    amplitude: 0.5
+  - seed: 7654
+    frequency: 0.5
+    amplitude: 5
   solidGroundHeight: 30
-  terrainHeight: 20
+  terrainHeight: 23
   lodes:
   - {fileID: 11400000, guid: 78d7018ccb9ca46e8af41d4868330cf2, type: 2}
   - {fileID: 11400000, guid: b0b5fca0caa734065ad45201e758c350, type: 2}
-  hasTree: 1
+  hasTree: 0
   treeZoneScale: 0.5
   treeZoneThreshold: 0.15
   treeScale: 25

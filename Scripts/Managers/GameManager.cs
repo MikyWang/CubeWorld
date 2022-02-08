@@ -51,19 +51,24 @@ namespace MilkSpun.CubeWorld.Managers
         public WorldRenderer WorldPrefab => worldPrefab;
         public List<Biome> Biomes => biomes;
 
+        private static TaskScheduler _unitySyncContext;
+        private static int _mainThreadId;
+
         protected override void Awake()
         {
             base.Awake();
             DontDestroyOnLoad(this);
         }
-        private async void Start()
+        private void Start()
         {
+            _mainThreadId = Thread.CurrentThread.ManagedThreadId;
             Random.InitState(chunkConfig.seed);
+            _unitySyncContext = TaskScheduler.FromCurrentSynchronizationContext();
             Locator.World = World ??= new World();
-            await World.GenerateWorld();
+            World.GenerateWorld();
             SetCamera(GeneratePlayer());
         }
-        
+
         private GameObject GeneratePlayer()
         {
             var middle = World.MiddleCoord * chunkConfig.chunkWidth +
@@ -83,6 +88,17 @@ namespace MilkSpun.CubeWorld.Managers
             CmFreeLook.m_YAxis.Value = 0.5f;
         }
 
+        public static async Task RunInUnitySyncContext(Action action)
+        {
+            if (Thread.CurrentThread.ManagedThreadId == _mainThreadId)
+            {
+                action();
+            }
+            else
+            {
+                await Task.Factory.StartNew(action, CancellationToken.None, TaskCreationOptions.None, _unitySyncContext);
+            }
+        }
 
     }
 }

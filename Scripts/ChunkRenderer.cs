@@ -1,4 +1,6 @@
 using System.Threading;
+using System.Threading.Tasks;
+using MilkSpun.CubeWorld.Managers;
 using MilkSpun.CubeWorld.Models;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -26,15 +28,13 @@ namespace MilkSpun.CubeWorld
             var mesh = Chunk.ConvertToMesh();
             _meshFilter.mesh = mesh;
             ReGenerateMeshCollider(mesh);
-            Chunk.ClearData();
         }
-
         private void ReGenerateMeshCollider(Mesh mesh)
         {
             Physics.BakeMesh(mesh.GetInstanceID(), false);
             _meshCollider.sharedMesh = mesh;
         }
 
-       
+
     }
 }
