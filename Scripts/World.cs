@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MilkSpun.Common;
@@ -26,7 +28,7 @@ namespace MilkSpun.CubeWorld
 
         private readonly WorldRenderer _worldRenderer;
         private readonly Chunk[,] _chunks;
-        private readonly Queue<Chunk> _chunksToUpdate;
+        private readonly ConcurrentQueue<Chunk> _chunksToUpdate;
         public Vector3 Center { get; }
 
         public World() : this(Vector3.zero) { }
@@ -35,9 +37,10 @@ namespace MilkSpun.CubeWorld
             Center = center;
             MiddleCoord = Mathf.FloorToInt((float)ChunkConfig.chunkCoordSize / 2);
             _chunks = new Chunk[ChunkConfig.chunkCoordSize, ChunkConfig.chunkCoordSize];
-            _chunksToUpdate = new Queue<Chunk>();
+            _chunksToUpdate = new ConcurrentQueue<Chunk>();
             _worldRenderer = Object.Instantiate(WorldPrefab);
             _worldRenderer.World = this;
+
         }
 
         public void RePopulateChunkFromCoord(ChunkCoord chunkCoord)
@@ -54,6 +57,7 @@ namespace MilkSpun.CubeWorld
         public void GenerateWorld()
         {
             RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord, MiddleCoord));
+
             _ = Task.Run(() =>
             {
                 for (var mc = 1; mc < MiddleCoord + 1; mc++)
@@ -75,6 +79,7 @@ namespace MilkSpun.CubeWorld
                     });
                 }
             });
+            UpdateChunks();
         }
 
         public static bool IsPositionOnWorld(float x, float z)
@@ -121,13 +126,13 @@ namespace MilkSpun.CubeWorld
 
             foreach (var bo in Biomes)
             {
-                var weight = NoiseGenerator.Get2DPerlinNoise(noisePos, bo.offset, bo.scale, ChunkConfig.chunkWidth);
+                var weight = NoiseGenerator.Get2DPerlinNoise(noisePos, bo.offset + ChunkConfig.seed, bo.scale, ChunkConfig.chunkWidth);
                 if (weight > strongestWeight)
                 {
                     strongestWeight = weight;
                     biome = bo;
                 }
-                var height = NoiseGenerator.Get2DPerlinNoiseWithWaves(noisePos, 0, bo.terrainScale, bo.waves, ChunkConfig.chunkWidth) * weight * bo.terrainHeight;
+                var height = NoiseGenerator.Get2DPerlinNoiseWithWaves(noisePos, ChunkConfig.seed, bo.terrainScale, bo.waves, ChunkConfig.chunkWidth) * weight * bo.terrainHeight;
                 if (height <= 0) continue;
                 sumHeight += height;
                 count++;
@@ -164,7 +169,7 @@ namespace MilkSpun.CubeWorld
                 {
                     if (y < lode.minHeight || y > lode.maxHeight) continue;
 
-                    if (NoiseGenerator.Get3DPerlinNoise(pos, lode.offset, lode.scale, lode.threshold, 1))
+                    if (NoiseGenerator.Get3DPerlinNoise(pos, lode.offset + ChunkConfig.seed, lode.scale, lode.threshold, 1))
                     {
                         voxelType = lode.voxelType;
                     }
@@ -183,29 +188,31 @@ namespace MilkSpun.CubeWorld
 
         public async void UpdateChunks()
         {
-            while (true)
+            await Task.Run(async () =>
             {
-                if (_chunksToUpdate.Count > 0)
+                while (true)
                 {
-                    var chunk = _chunksToUpdate.Dequeue();
-                    RePopulateChunkFromCoord(chunk.ChunkCoord);
+                    if (_chunksToUpdate.Count > 0)
+                    {
+                        _chunksToUpdate.TryDequeue(out var chunk);
+                        RePopulateChunkFromCoord(chunk.ChunkCoord);
+                    }
+                    await Task.Delay(100);
                 }
-                await Task.Delay(100);
-            }
+            });
         }
 
         private void GenerateTree(Vector3 pos, Biome biome)
         {
             var noisePos = new Vector2(pos.x, pos.z);
-            var treeZoneNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, 0f, biome.treeZoneScale,
+            var treeZoneNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfig.seed, biome.treeZoneScale,
                 NoiseResolution);
             if (!(treeZoneNoise > biome.treeZoneThreshold)) return;
 
-            var treeNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, 0f, biome.treeScale, NoiseResolution);
+            var treeNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfig.seed, biome.treeScale, NoiseResolution);
             if (!(treeNoise > biome.treeThreshold)) return;
 
-            var noiseHeight = biome.maxHeight *
-                              NoiseGenerator.Get2DPerlinNoise(noisePos, 250f, 3f, NoiseResolution);
+            var noiseHeight = biome.maxHeight * NoiseGenerator.Get2DPerlinNoise(noisePos, 250f + ChunkConfig.seed, 3f, NoiseResolution);
             var height = Mathf.FloorToInt(noiseHeight + biome.minHeight);
             for (var h = 0; h <= height; h++)
             {

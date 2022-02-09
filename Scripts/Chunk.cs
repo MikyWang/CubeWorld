@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
-using System.Threading;
 using MilkSpun.Common;
 using MilkSpun.CubeWorld.Managers;
 using MilkSpun.CubeWorld.Models;
@@ -20,6 +19,7 @@ namespace MilkSpun.CubeWorld
         private readonly Voxel[,,] _voxels;
         private ChunkRenderer _chunkRenderer;
         private int _verticesIndex;
+        private Task _populateTask;
         public Vector3 Position { get; }
         public Vector3 LocalPosition { get; }
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
@@ -46,6 +46,7 @@ namespace MilkSpun.CubeWorld
             var xVoxel = Mathf.FloorToInt(x - Position.x);
             var zVoxel = Mathf.FloorToInt(z - Position.z);
             ref var voxel = ref _voxels[xVoxel, yVoxel, zVoxel];
+
             if (!voxel.Initialize)
             {
                 voxel = new Voxel(this, xVoxel, yVoxel, zVoxel);
@@ -90,7 +91,17 @@ namespace MilkSpun.CubeWorld
                    zVoxel <= ChunkConfig.chunkWidth - 1;
         }
 
-        public void CreateChunk()
+        public async void CreateChunk()
+        {
+            if (_populateTask is not null)
+            {
+                await _populateTask;
+            }
+            _populateTask = Populate();
+            await _populateTask;
+        }
+
+        private async Task Populate()
         {
             for (var y = 0; y < ChunkConfig.chunkHeight; y++)
             {
@@ -102,7 +113,7 @@ namespace MilkSpun.CubeWorld
                     }
                 }
             }
-            _ = Refresh();
+            await Refresh();
         }
 
         public Mesh ConvertToMesh()

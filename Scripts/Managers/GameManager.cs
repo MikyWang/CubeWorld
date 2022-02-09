@@ -61,8 +61,8 @@ namespace MilkSpun.CubeWorld.Managers
         }
         private void Start()
         {
-            _mainThreadId = Thread.CurrentThread.ManagedThreadId;
             Random.InitState(chunkConfig.seed);
+            _mainThreadId = Thread.CurrentThread.ManagedThreadId;
             _unitySyncContext = TaskScheduler.FromCurrentSynchronizationContext();
             Locator.World = World ??= new World();
             World.GenerateWorld();
