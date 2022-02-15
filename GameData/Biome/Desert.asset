@@ -17,7 +17,7 @@ MonoBehaviour:
   offset: 500
   surfaceVoxelType: 2
   subsurfaceVoxelType: 2
-  terrainScale: 1
+  terrainScale: 0.75
   waves:
   - seed: 2136
     frequency: 2

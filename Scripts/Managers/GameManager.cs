@@ -71,11 +71,10 @@ namespace MilkSpun.CubeWorld.Managers
 
         private GameObject GeneratePlayer()
         {
-            var middle = World.MiddleCoord * chunkConfig.chunkWidth +
-                         Mathf.FloorToInt((float)chunkConfig.chunkWidth / 2);
+            var middle = World.MiddleCoord * chunkConfig.chunkWidth + Mathf.FloorToInt((float)chunkConfig.chunkWidth / 2);
             var middleChunk = World.Chunks[World.MiddleCoord, World.MiddleCoord];
             var solidVoxel = middleChunk.GetTopSolidVoxelFromPosition(middle, middle);
-            var pos = new Vector3(middle, solidVoxel.Y + 1, middle);
+            var pos = new Vector3(middle, solidVoxel.y + 1, middle);
             var player = Instantiate(originalPlayerPrefab, pos, Quaternion.identity);
             player.transform.position = pos;
             return player;

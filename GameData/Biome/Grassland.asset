@@ -17,7 +17,7 @@ MonoBehaviour:
   offset: 300
   surfaceVoxelType: 5
   subsurfaceVoxelType: 1
-  terrainScale: 0.15
+  terrainScale: 1.5
   waves:
   - seed: 2136
     frequency: 2
@@ -35,8 +35,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b0b5fca0caa734065ad45201e758c350, type: 2}
   hasTree: 1
   treeZoneScale: 0.5
-  treeZoneThreshold: 0.15
-  treeScale: 25
+  treeZoneThreshold: 0.35
+  treeScale: 30
   treeThreshold: 0.85
   maxHeight: 5
   minHeight: 2

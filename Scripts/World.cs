@@ -11,6 +11,7 @@ using MilkSpun.CubeWorld.Models;
 using MilkSpun.CubeWorld.Utils;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Tree = MilkSpun.CubeWorld.Models.Tree;
 
 namespace MilkSpun.CubeWorld
 {
@@ -28,7 +29,7 @@ namespace MilkSpun.CubeWorld
 
         private readonly WorldRenderer _worldRenderer;
         private readonly Chunk[,] _chunks;
-        private readonly ConcurrentQueue<Chunk> _chunksToUpdate;
+        private readonly BlockingCollection<Tree> _trees;
         public Vector3 Center { get; }
 
         public World() : this(Vector3.zero) { }
@@ -37,12 +38,15 @@ namespace MilkSpun.CubeWorld
             Center = center;
             MiddleCoord = Mathf.FloorToInt((float)ChunkConfig.chunkCoordSize / 2);
             _chunks = new Chunk[ChunkConfig.chunkCoordSize, ChunkConfig.chunkCoordSize];
-            _chunksToUpdate = new ConcurrentQueue<Chunk>();
             _worldRenderer = Object.Instantiate(WorldPrefab);
             _worldRenderer.World = this;
-
+            _trees = new BlockingCollection<Tree>(new ConcurrentQueue<Tree>());
         }
 
+        /// <summary>
+        /// 重新生成某一地块
+        /// </summary>
+        /// <param name="chunkCoord">地块坐标(x,z)</param>
         public void RePopulateChunkFromCoord(ChunkCoord chunkCoord)
         {
             var x = chunkCoord.x;
@@ -54,10 +58,12 @@ namespace MilkSpun.CubeWorld
             _chunks[x, z].CreateChunk();
         }
 
+        /// <summary>
+        /// 生成世界
+        /// </summary>
         public void GenerateWorld()
         {
             RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord, MiddleCoord));
-
             _ = Task.Run(() =>
             {
                 for (var mc = 1; mc < MiddleCoord + 1; mc++)
@@ -79,9 +85,15 @@ namespace MilkSpun.CubeWorld
                     });
                 }
             });
-            UpdateChunks();
+            _ = Task.Factory.StartNew(GenerateTrees, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
+        /// <summary>
+        /// 判断坐标是否在世界上
+        /// </summary>
+        /// <param name="x">x</param>
+        /// <param name="z">z</param>
+        /// <returns>存在则返回true,否则false</returns>
         public static bool IsPositionOnWorld(float x, float z)
         {
             var xChunk = Mathf.FloorToInt(x / ChunkConfig.chunkWidth);
@@ -93,6 +105,13 @@ namespace MilkSpun.CubeWorld
                    zChunk <= ChunkConfig.chunkCoordSize - 1;
         }
 
+        /// <summary>
+        /// 判断该世界坐标是否在地面上
+        /// </summary>
+        /// <param name="x">x</param>
+        /// <param name="y">y</param>
+        /// <param name="z">z</param>
+        /// <returns>存在则返回true,否则false</returns>
         public bool CheckPositionOnGround(float x, float y, float z)
         {
             var xChunk = Mathf.FloorToInt(x / ChunkConfig.chunkWidth);
@@ -111,6 +130,11 @@ namespace MilkSpun.CubeWorld
             return voxel.GetVoxelConfig().isSolid;
         }
 
+        /// <summary>
+        /// 重新生成该坐标的方块类型
+        /// </summary>
+        /// <param name="pos">(x,y,z)</param>
+        /// <returns>方块类型</returns>
         public VoxelType GenerateVoxelType(Vector3 pos)
         {
             //默认行为
@@ -151,9 +175,13 @@ namespace MilkSpun.CubeWorld
             {
                 voxelType = biome.surfaceVoxelType;
                 //随机生成树木
-                if (biome.hasTree)
+                if (biome.hasTree && TreePass(pos, biome))
                 {
-                    GenerateTree(pos, biome);
+                    var noiseHeight = biome.maxHeight * NoiseGenerator.Get2DPerlinNoise(noisePos, 250f + ChunkConfig.seed, 3f, NoiseResolution);
+                    var height = Mathf.FloorToInt(noiseHeight + biome.minHeight);
+                    var tree = new Tree(pos) { height = height };
+                    _trees.Add(tree);
+                    voxelType = VoxelType.Stump;
                 }
             }
             if (y < terrainHeight)
@@ -169,7 +197,7 @@ namespace MilkSpun.CubeWorld
                 {
                     if (y < lode.minHeight || y > lode.maxHeight) continue;
 
-                    if (NoiseGenerator.Get3DPerlinNoise(pos, lode.offset + ChunkConfig.seed, lode.scale, lode.threshold, 1))
+                    if (NoiseGenerator.Get3DPerlinNoise(pos, lode.offset + ChunkConfig.seed, lode.scale, lode.threshold))
                     {
                         voxelType = lode.voxelType;
                     }
@@ -186,76 +214,35 @@ namespace MilkSpun.CubeWorld
             return ref _chunks[xChunk, zChunk];
         }
 
-        public async void UpdateChunks()
-        {
-            await Task.Run(async () =>
-            {
-                while (true)
-                {
-                    if (_chunksToUpdate.Count > 0)
-                    {
-                        _chunksToUpdate.TryDequeue(out var chunk);
-                        RePopulateChunkFromCoord(chunk.ChunkCoord);
-                    }
-                    await Task.Delay(100);
-                }
-            });
-        }
-
-        private void GenerateTree(Vector3 pos, Biome biome)
+        private static bool TreePass(Vector3 pos, Biome biome)
         {
             var noisePos = new Vector2(pos.x, pos.z);
             var treeZoneNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfig.seed, biome.treeZoneScale,
                 NoiseResolution);
-            if (!(treeZoneNoise > biome.treeZoneThreshold)) return;
+            if (!(treeZoneNoise > biome.treeZoneThreshold)) return false;
 
             var treeNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfig.seed, biome.treeScale, NoiseResolution);
-            if (!(treeNoise > biome.treeThreshold)) return;
+            if (!(treeNoise > biome.treeThreshold)) return false;
 
-            var noiseHeight = biome.maxHeight * NoiseGenerator.Get2DPerlinNoise(noisePos, 250f + ChunkConfig.seed, 3f, NoiseResolution);
-            var height = Mathf.FloorToInt(noiseHeight + biome.minHeight);
-            for (var h = 0; h <= height; h++)
-            {
-                if (h + pos.y >= ChunkConfig.chunkHeight) break;
-
-                var chunk = GetChunkFromPosition(pos.x, pos.z);
-                ref var voxel = ref chunk.GetVoxelFromPosition(pos.x, h + pos.y, pos.z);
-                voxel.VoxelType = VoxelType.Stump;
-            }
-
-            var leafHeight = pos.y + height;
-            var chunksToUpdate = new HashSet<Chunk>();
-            for (var y = 0; y < 3; y++)
-            {
-                for (var x = pos.x + y - 2; x <= pos.x - y + 2; x++)
-                {
-                    for (var z = pos.z + y - 2; z <= pos.z - y + 2; z++)
-                    {
-                        if (leafHeight + y >= ChunkConfig.chunkHeight) break;
-                        if (!IsPositionOnWorld(x, z)) break;
-                        ref var chunk = ref GetChunkFromPosition(x, z);
-                        chunksToUpdate.Add(chunk);
-                        ref var voxel = ref chunk.GetVoxelFromPosition(x, leafHeight + y, z);
-                        if (Mathf.Abs(x - pos.x) < 0.001f && Mathf.Abs(z - pos.z) < 0.001f && y < 2)
-                        {
-                            voxel.VoxelType = VoxelType.Stump;
-                        }
-                        else
-                        {
-                            voxel.VoxelType = VoxelType.Leaf;
-                        }
-                    }
-                }
-            }
-            foreach (var chunk in chunksToUpdate)
-            {
-                _chunksToUpdate.Enqueue(chunk);
-            }
+            return true;
         }
-
         public override string ToString()
         {
             return $"World{Center}";
+        }
+
+        private void GenerateTrees()
+        {
+            while (!_trees.IsCompleted)
+            {
+                foreach (var tree in _trees.GetConsumingEnumerable())
+                {
+                    if (tree.Glow())
+                    {
+                        _trees.Add(tree);
+                    }
+                }
+            }
         }
     }
 }

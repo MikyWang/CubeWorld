@@ -16,4 +16,5 @@ MonoBehaviour:
   chunkWidth: 16
   chunkHeight: 128
   textureAtlasSizeInBlocks: 4
-  chunkCoordSize: 5
+  chunkCoordSize: 20
+  treeGlowSpeed: 500
