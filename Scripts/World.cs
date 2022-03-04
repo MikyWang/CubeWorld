@@ -21,7 +21,6 @@ namespace MilkSpun.CubeWorld
         public Vector3 Position => Transform.position;
         public Chunk[,] Chunks => _chunks;
         public int MiddleCoord { get; }
-
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
         private static List<Biome> Biomes => GameManager.Instance.Biomes;
         private static int NoiseResolution => ChunkConfig.chunkWidth;
@@ -41,6 +40,7 @@ namespace MilkSpun.CubeWorld
             _worldRenderer = Object.Instantiate(WorldPrefab);
             _worldRenderer.World = this;
             _trees = new BlockingCollection<Tree>(new ConcurrentQueue<Tree>());
+
         }
 
         /// <summary>
@@ -64,28 +64,9 @@ namespace MilkSpun.CubeWorld
         public void GenerateWorld()
         {
             RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord, MiddleCoord));
-            _ = Task.Run(() =>
-            {
-                for (var mc = 1; mc < MiddleCoord + 1; mc++)
-                {
-                    var mcSync = mc;
-                    Parallel.For(0, mcSync + 1, i =>
-                    {
-                        if (i > 0 && i < mcSync)
-                        {
-                            RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord - i, MiddleCoord + mcSync));
-                            RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord + mcSync, MiddleCoord + i));
-                            RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord - mcSync, MiddleCoord - i));
-                            RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord + i, MiddleCoord - mcSync));
-                        }
-                        RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord + i, MiddleCoord + mcSync));
-                        RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord - mcSync, MiddleCoord + i));
-                        RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord + mcSync, MiddleCoord - i));
-                        RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord - i, MiddleCoord - mcSync));
-                    });
-                }
-            });
+            ConcurrentGenerateWorld();
             _ = Task.Factory.StartNew(GenerateTrees, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            _ = Task.Factory.StartNew(UpdateChunks, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
         /// <summary>
@@ -100,9 +81,9 @@ namespace MilkSpun.CubeWorld
             var zChunk = Mathf.FloorToInt(z / ChunkConfig.chunkWidth);
 
             return xChunk >= 0 &&
-                   xChunk <= ChunkConfig.chunkCoordSize - 1 &&
-                   zChunk >= 0 &&
-                   zChunk <= ChunkConfig.chunkCoordSize - 1;
+                xChunk <= ChunkConfig.chunkCoordSize - 1 &&
+                zChunk >= 0 &&
+                zChunk <= ChunkConfig.chunkCoordSize - 1;
         }
 
         /// <summary>
@@ -150,13 +131,13 @@ namespace MilkSpun.CubeWorld
 
             foreach (var bo in Biomes)
             {
-                var weight = NoiseGenerator.Get2DPerlinNoise(noisePos, bo.offset + ChunkConfig.seed, bo.scale, ChunkConfig.chunkWidth);
+                var weight = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfig.seed, bo.scale, NoiseResolution);
                 if (weight > strongestWeight)
                 {
                     strongestWeight = weight;
                     biome = bo;
                 }
-                var height = NoiseGenerator.Get2DPerlinNoiseWithWaves(noisePos, ChunkConfig.seed, bo.terrainScale, bo.waves, ChunkConfig.chunkWidth) * weight * bo.terrainHeight;
+                var height = NoiseGenerator.Get2DPerlinNoiseWithWaves(noisePos, bo.offset + ChunkConfig.seed, bo.terrainScale, bo.waves, NoiseResolution) * weight * bo.terrainHeight;
                 if (height <= 0) continue;
                 sumHeight += height;
                 count++;
@@ -164,10 +145,7 @@ namespace MilkSpun.CubeWorld
             // 基础地形
             var terrainHeight = Mathf.FloorToInt(sumHeight / count) + biome.solidGroundHeight;
 
-            if (y > terrainHeight)
-            {
-                return VoxelType.Air;
-            }
+            if (y > terrainHeight) return VoxelType.Air;
 
             var voxelType = VoxelType.Air;
 
@@ -184,25 +162,17 @@ namespace MilkSpun.CubeWorld
                     voxelType = VoxelType.Stump;
                 }
             }
-            if (y < terrainHeight)
-            {
-                voxelType = y > terrainHeight - 5 ? biome.subsurfaceVoxelType : VoxelType.Stone;
-            }
+            if (y < terrainHeight) voxelType = y > terrainHeight - 5 ? biome.subsurfaceVoxelType : VoxelType.Stone;
 
             //生物多样性地形
 
             if (voxelType == VoxelType.Stone)
-            {
                 foreach (var lode in biome.lodes)
                 {
                     if (y < lode.minHeight || y > lode.maxHeight) continue;
 
-                    if (NoiseGenerator.Get3DPerlinNoise(pos, lode.offset + ChunkConfig.seed, lode.scale, lode.threshold))
-                    {
-                        voxelType = lode.voxelType;
-                    }
+                    if (NoiseGenerator.Get3DPerlinNoise(pos, lode.offset + ChunkConfig.seed, lode.scale, lode.threshold)) voxelType = lode.voxelType;
                 }
-            }
             return voxelType;
         }
 
@@ -217,8 +187,7 @@ namespace MilkSpun.CubeWorld
         private static bool TreePass(Vector3 pos, Biome biome)
         {
             var noisePos = new Vector2(pos.x, pos.z);
-            var treeZoneNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfig.seed, biome.treeZoneScale,
-                NoiseResolution);
+            var treeZoneNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfig.seed, biome.treeZoneScale, NoiseResolution);
             if (!(treeZoneNoise > biome.treeZoneThreshold)) return false;
 
             var treeNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfig.seed, biome.treeScale, NoiseResolution);
@@ -243,6 +212,46 @@ namespace MilkSpun.CubeWorld
                     }
                 }
             }
+        }
+
+        private void UpdateChunks()
+        {
+            while (true)
+            {
+                for (var x = 0; x < ChunkConfig.chunkCoordSize; x++)
+                {
+                    for (var z = 0; z < ChunkConfig.chunkCoordSize; z++)
+                    {
+                        _chunks[x, z]?.UpdateChunk();
+                    }
+                }
+            }
+            // ReSharper disable once FunctionNeverReturns
+        }
+
+        private Task ConcurrentGenerateWorld()
+        {
+            return Task.Run(() =>
+            {
+                for (var mc = 1; mc < MiddleCoord + 1; mc++)
+                {
+                    var mcSync = mc;
+                    Parallel.For(0, mcSync + 1, i =>
+                    {
+                        if (i > 0 && i < mcSync)
+                        {
+                            RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord - i, MiddleCoord + mcSync));
+                            RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord + mcSync, MiddleCoord + i));
+                            RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord - mcSync, MiddleCoord - i));
+                            RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord + i, MiddleCoord - mcSync));
+                        }
+                        RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord + i, MiddleCoord + mcSync));
+                        RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord - mcSync, MiddleCoord + i));
+                        RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord + mcSync, MiddleCoord - i));
+                        RePopulateChunkFromCoord(new ChunkCoord(MiddleCoord - i, MiddleCoord - mcSync));
+                    });
+                }
+            });
         }
     }
 }

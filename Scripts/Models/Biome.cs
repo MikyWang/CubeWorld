@@ -9,9 +9,8 @@ namespace MilkSpun.CubeWorld.Models
     [CreateAssetMenu(fileName = "Config", menuName = "MilkSpun/创建一个生物群落")]
     public class Biome : ScriptableObject
     {
-        [TabGroup("生物群落")] [Tooltip("生物群落类型")] public BiomeType biomeType;
         [TabGroup("生物群落")] [Tooltip("噪声的缩放比")] public float scale;
-        [TabGroup("生物群落")] [Tooltip("offset")] public int offset;
+        [TabGroup("生物群落")] [Tooltip("生物群落类型")] public BiomeType biomeType;
         [TabGroup("生物群落")]
         [Tooltip("地表Voxel")]
         public VoxelType surfaceVoxelType;
@@ -19,9 +18,10 @@ namespace MilkSpun.CubeWorld.Models
         [Tooltip("地表下Voxel")]
         public VoxelType subsurfaceVoxelType;
         [TabGroup("地形")] [Tooltip("地表Voxel")] public float terrainScale;
-        [TabGroup("地形")] [Tooltip("Waves")] public List<Wave> waves;
+        [TabGroup("地形")] [Tooltip("offset")] public int offset;
         [TabGroup("地形")] [Tooltip("可见块平地高度")] public int solidGroundHeight;
         [TabGroup("地形")] [Tooltip("地形基本高度")] public int terrainHeight;
+        [TabGroup("地形")] [Tooltip("Waves")] public List<Wave> waves;
         [TabGroup("地心")] [InlineEditor] public Lode[] lodes;
         [TabGroup("树木")]
         [Tooltip("树木区域噪声的缩放比")]

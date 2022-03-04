@@ -63,9 +63,11 @@ namespace MilkSpun.CubeWorld.Utils
                         {
                             leafVoxel.voxelType = VoxelType.Leaf;
                         }
+                        leafChunk.PrepareUpdate();
                     }
                 }
             }
+
             return false; //生长完成，无需再生长了.
         }
     }

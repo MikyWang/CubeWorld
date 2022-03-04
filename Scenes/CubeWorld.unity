@@ -625,7 +625,7 @@ PrefabInstance:
     - target: {fileID: 5900023541641583911, guid: 8b91d42465c2849b58ca18a99c45a094,
         type: 3}
       propertyPath: biomes.Array.size
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8b91d42465c2849b58ca18a99c45a094, type: 3}

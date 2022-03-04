@@ -12,12 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 147194f663b184b189fad1153f077a85, type: 3}
   m_Name: Snow
   m_EditorClassIdentifier: 
+  scale: 0.12
   biomeType: 0
-  scale: 4
-  offset: 800
   surfaceVoxelType: 4
   subsurfaceVoxelType: 4
   terrainScale: 3
+  offset: 800
+  solidGroundHeight: 34
+  terrainHeight: 20
   waves:
   - seed: 2136
     frequency: 2
@@ -28,8 +30,6 @@ MonoBehaviour:
   - seed: 7654
     frequency: 0.5
     amplitude: 5
-  solidGroundHeight: 30
-  terrainHeight: 23
   lodes:
   - {fileID: 11400000, guid: 78d7018ccb9ca46e8af41d4868330cf2, type: 2}
   - {fileID: 11400000, guid: b0b5fca0caa734065ad45201e758c350, type: 2}

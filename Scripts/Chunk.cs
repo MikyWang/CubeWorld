@@ -9,6 +9,7 @@ using MilkSpun.CubeWorld.Models;
 using MilkSpun.CubeWorld.Utils;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Version = MilkSpun.CubeWorld.Models.Version;
 
 namespace MilkSpun.CubeWorld
 {
@@ -18,8 +19,8 @@ namespace MilkSpun.CubeWorld
         private readonly ChunkMeshData _meshData;
         private readonly Voxel[,,] _voxels;
         private ChunkRenderer _chunkRenderer;
+        private readonly Version _version;
         private int _verticesIndex;
-        private Task _populateTask;
         public Vector3 Position { get; }
         public Vector3 LocalPosition { get; }
         private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
@@ -30,7 +31,8 @@ namespace MilkSpun.CubeWorld
         {
             _meshData = new ChunkMeshData();
             _voxels = new Voxel[ChunkConfig.chunkWidth, ChunkConfig.chunkHeight, ChunkConfig.chunkWidth];
-            this._chunkCoord = chunkCoord;
+            _chunkCoord = chunkCoord;
+            _version = new Version();
             LocalPosition = new Vector3
             {
                 x = _chunkCoord.x * ChunkConfig.chunkWidth,
@@ -84,26 +86,16 @@ namespace MilkSpun.CubeWorld
             var zVoxel = Mathf.FloorToInt(z - Position.z);
 
             return xVoxel >= 0 &&
-                   xVoxel <= ChunkConfig.chunkWidth - 1 &&
-                   yVoxel >= 0 &&
-                   yVoxel <= ChunkConfig.chunkHeight - 1 &&
-                   zVoxel >= 0 &&
-                   zVoxel <= ChunkConfig.chunkWidth - 1;
+                xVoxel <= ChunkConfig.chunkWidth - 1 &&
+                yVoxel >= 0 &&
+                yVoxel <= ChunkConfig.chunkHeight - 1 &&
+                zVoxel >= 0 &&
+                zVoxel <= ChunkConfig.chunkWidth - 1;
         }
 
-        public async void CreateChunk()
+        public void CreateChunk()
         {
-            if (_populateTask is not null)
-            {
-                await _populateTask;
-                _populateTask = Populate();
-
-            }
-            else
-            {
-                _populateTask = Populate();
-                await _populateTask;
-            }
+            _version.UpdateAsync(async () => { await Populate(); });
         }
 
         private async Task Populate()
@@ -132,6 +124,19 @@ namespace MilkSpun.CubeWorld
                 uv = _meshData.uv.ToArray(),
                 uv2 = _meshData.uv2.ToArray()
             };
+        }
+
+        public void PrepareUpdate()
+        {
+            _version.PrepareUpdate();
+        }
+
+        public void UpdateChunk()
+        {
+            if (_version.TrySync())
+            {
+                CreateChunk();
+            }
         }
 
         private void PopulateVoxel(int x, int y, int z)
@@ -178,7 +183,7 @@ namespace MilkSpun.CubeWorld
             var id = textureID % textureAtlasSize;
 
             var row = id / textureAtlasSizeInBlocks;
-            var invertedRow = (textureAtlasSizeInBlocks - 1) - row;
+            var invertedRow = textureAtlasSizeInBlocks - 1 - row;
             var col = id % textureAtlasSizeInBlocks;
 
             var x = col * normalizedBlockTextureSize;
@@ -230,7 +235,7 @@ namespace MilkSpun.CubeWorld
             public VoxelType voxelType;
             public bool Initialize { get; }
             public Chunk Chunk { get; }
-            public Vector3 LocalPos => new(x, y, z);
+            public Vector3 LocalPos => new Vector3(x, y, z);
 
             public Voxel(
                 Chunk chunk,
@@ -257,10 +262,10 @@ namespace MilkSpun.CubeWorld
                 var voxelConfig = GetVoxelConfig();
                 if (!voxelConfig.isSolid) return true;
 
-                var xCoordPos = this.x + Chunk.LocalPosition.x;
-                var zCoordPos = this.z + Chunk.LocalPosition.z;
+                var xCoordPos = x + Chunk.LocalPosition.x;
+                var zCoordPos = z + Chunk.LocalPosition.z;
 
-                var voxelFacePos = new Vector3(xCoordPos, this.y, zCoordPos) + ChunkConfig.VoxelFaceOffset[voxelFaceType];
+                var voxelFacePos = new Vector3(xCoordPos, y, zCoordPos) + ChunkConfig.VoxelFaceOffset[voxelFaceType];
 
                 if (!World.CheckPositionOnGround(voxelFacePos.x, voxelFacePos.y, voxelFacePos.z))
                 {
@@ -278,11 +283,11 @@ namespace MilkSpun.CubeWorld
                 var height = ChunkConfig.chunkHeight;
 
                 return lx >= 0 &&
-                       lx <= width - 1 &&
-                       ly >= 0 &&
-                       ly <= height - 1 &&
-                       lz >= 0 &&
-                       lz <= width - 1;
+                    lx <= width - 1 &&
+                    ly >= 0 &&
+                    ly <= height - 1 &&
+                    lz >= 0 &&
+                    lz <= width - 1;
             }
 
             public Vector3 GetWorldPosition()
@@ -318,17 +323,17 @@ namespace MilkSpun.CubeWorld
                 return voxelFaceType switch
                 {
                     VoxelFaceType.Back => voxelConfig.backFaceTexture +
-                                          voxelConfig.page * textureAtlasSize,
+                        voxelConfig.page * textureAtlasSize,
                     VoxelFaceType.Front => voxelConfig.frontFaceTexture +
-                                           voxelConfig.page * textureAtlasSize,
+                        voxelConfig.page * textureAtlasSize,
                     VoxelFaceType.Top => voxelConfig.topFaceTexture +
-                                         voxelConfig.page * textureAtlasSize,
+                        voxelConfig.page * textureAtlasSize,
                     VoxelFaceType.Bottom => voxelConfig.bottomFaceTexture +
-                                            voxelConfig.page * textureAtlasSize,
+                        voxelConfig.page * textureAtlasSize,
                     VoxelFaceType.Left => voxelConfig.leftFaceTexture +
-                                          voxelConfig.page * textureAtlasSize,
+                        voxelConfig.page * textureAtlasSize,
                     VoxelFaceType.Right => voxelConfig.rightFaceTexture +
-                                           voxelConfig.page * textureAtlasSize,
+                        voxelConfig.page * textureAtlasSize,
                     _ => 0
                 };
             }
