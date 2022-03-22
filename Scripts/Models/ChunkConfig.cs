@@ -13,7 +13,6 @@ namespace MilkSpun.CubeWorld.Models
         [Tooltip("一个Chunk的高度,默认128")] public int chunkHeight = 128;
         [Tooltip("整个纹理各有多少行,如:4x4个小纹理")] public int textureAtlasSizeInBlocks = 4;
         [Tooltip("世界上拥有多少个Chunk,默认5x5")] public int chunkCoordSize = 5;
-        [Tooltip("树木生长速度，单位毫秒")] public int treeGlowSpeed = 100;
 
         /// <summary>
         /// 世界的宽度

@@ -15,7 +15,7 @@ MonoBehaviour:
   scale: 0.12
   biomeType: 0
   surfaceVoxelType: 4
-  subsurfaceVoxelType: 4
+  subsurfaceVoxelType: 1
   terrainScale: 3
   offset: 800
   solidGroundHeight: 34

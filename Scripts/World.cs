@@ -40,7 +40,6 @@ namespace MilkSpun.CubeWorld
             _worldRenderer = Object.Instantiate(WorldPrefab);
             _worldRenderer.World = this;
             _trees = new BlockingCollection<Tree>(new ConcurrentQueue<Tree>());
-
         }
 
         /// <summary>
@@ -84,6 +83,21 @@ namespace MilkSpun.CubeWorld
                 xChunk <= ChunkConfig.chunkCoordSize - 1 &&
                 zChunk >= 0 &&
                 zChunk <= ChunkConfig.chunkCoordSize - 1;
+        }
+
+        /// <summary>
+        /// 判断是否能在该坐标生成物体
+        /// </summary>
+        /// <param name="pos">(x,y,z)</param>
+        /// <param name="radius">半径</param>
+        /// <returns><see cref="bool"/></returns>
+        public static bool IsPositionCanBuild(Vector3 pos, int radius)
+        {
+            var x = Mathf.FloorToInt(pos.x);
+            var z = Mathf.FloorToInt(pos.z);
+            var width = ChunkConfig.WorldSizeInVoxels;
+
+            return x >= radius && x <= width - radius && z >= radius && z <= width - radius;
         }
 
         /// <summary>
@@ -186,14 +200,14 @@ namespace MilkSpun.CubeWorld
 
         private static bool TreePass(Vector3 pos, Biome biome)
         {
+            if (!IsPositionCanBuild(pos, 2)) return false;
+
             var noisePos = new Vector2(pos.x, pos.z);
             var treeZoneNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfig.seed, biome.treeZoneScale, NoiseResolution);
             if (!(treeZoneNoise > biome.treeZoneThreshold)) return false;
 
             var treeNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfig.seed, biome.treeScale, NoiseResolution);
-            if (!(treeNoise > biome.treeThreshold)) return false;
-
-            return true;
+            return treeNoise > biome.treeThreshold;
         }
         public override string ToString()
         {

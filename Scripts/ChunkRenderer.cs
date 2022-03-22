@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using DG.Tweening;
 using MilkSpun.CubeWorld.Managers;
 using MilkSpun.CubeWorld.Models;
 using Sirenix.OdinInspector;
@@ -15,8 +16,6 @@ namespace MilkSpun.CubeWorld
         private MeshFilter _meshFilter;
         private MeshCollider _meshCollider;
         public Chunk Chunk { get; set; }
-
-        [OnInspectorInit]
         private void Awake()
         {
             _meshFilter = GetComponent<MeshFilter>();
