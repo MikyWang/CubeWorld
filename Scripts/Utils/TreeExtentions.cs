@@ -12,7 +12,6 @@ namespace MilkSpun.CubeWorld.Utils
     public static class ChunkExtentions
     {
         private static World World => GameManager.Instance.World;
-        private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
         /// <summary>
         /// 生长树木，并判断是否需要再生长
         /// </summary>
@@ -48,7 +47,7 @@ namespace MilkSpun.CubeWorld.Utils
                 {
                     for (var z = pos.z + y - 2; z <= pos.z - y + 2; z++)
                     {
-                        if (leafHeight + y >= ChunkConfig.chunkHeight) break;
+                        if (leafHeight + y >= ChunkConfigData.ChunkHeight) break;
 
                         if (!World.IsPositionOnWorld(x, z)) continue;
                         var leafChunk = World.GetChunkFromPosition(x, z);

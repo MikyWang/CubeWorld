@@ -23,21 +23,20 @@ namespace MilkSpun.CubeWorld
         private int _verticesIndex;
         public Vector3 Position { get; }
         public Vector3 LocalPosition { get; }
-        private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
         private static ChunkRenderer ChunkPrefab => GameManager.Instance.ChunkPrefab;
         private static World World => GameManager.Instance.World;
 
         public Chunk(ChunkCoord chunkCoord)
         {
             _meshData = new ChunkMeshData();
-            _voxels = new Voxel[ChunkConfig.chunkWidth, ChunkConfig.chunkHeight, ChunkConfig.chunkWidth];
+            _voxels = new Voxel[ChunkConfigData.ChunkWidth, ChunkConfigData.ChunkHeight, ChunkConfigData.ChunkWidth];
             _chunkCoord = chunkCoord;
             _version = new Version();
             LocalPosition = new Vector3
             {
-                x = _chunkCoord.x * ChunkConfig.chunkWidth,
+                x = _chunkCoord.x * ChunkConfigData.ChunkWidth,
                 y = 0f,
-                z = _chunkCoord.z * ChunkConfig.chunkWidth
+                z = _chunkCoord.z * ChunkConfigData.ChunkWidth
             };
             Position = World.Center + LocalPosition;
         }
@@ -62,7 +61,7 @@ namespace MilkSpun.CubeWorld
         {
             var xVoxel = Mathf.FloorToInt(x - Position.x);
             var zVoxel = Mathf.FloorToInt(z - Position.z);
-            for (var y = ChunkConfig.chunkHeight - 1; y >= 0; y--)
+            for (var y = ChunkConfigData.ChunkHeight - 1; y >= 0; y--)
             {
                 ref var voxel = ref _voxels[xVoxel, y, zVoxel];
                 if (!voxel.Initialize)
@@ -86,11 +85,11 @@ namespace MilkSpun.CubeWorld
             var zVoxel = Mathf.FloorToInt(z - Position.z);
 
             return xVoxel >= 0 &&
-                xVoxel <= ChunkConfig.chunkWidth - 1 &&
+                xVoxel <= ChunkConfigData.ChunkWidth - 1 &&
                 yVoxel >= 0 &&
-                yVoxel <= ChunkConfig.chunkHeight - 1 &&
+                yVoxel <= ChunkConfigData.ChunkHeight - 1 &&
                 zVoxel >= 0 &&
-                zVoxel <= ChunkConfig.chunkWidth - 1;
+                zVoxel <= ChunkConfigData.ChunkWidth - 1;
         }
 
         public void CreateChunk()
@@ -100,11 +99,11 @@ namespace MilkSpun.CubeWorld
 
         private async Task Populate()
         {
-            for (var y = 0; y < ChunkConfig.chunkHeight; y++)
+            for (var y = 0; y < ChunkConfigData.ChunkHeight; y++)
             {
-                for (var z = 0; z < ChunkConfig.chunkWidth; z++)
+                for (var z = 0; z < ChunkConfigData.ChunkWidth; z++)
                 {
-                    for (var x = 0; x < ChunkConfig.chunkWidth; x++)
+                    for (var x = 0; x < ChunkConfigData.ChunkWidth; x++)
                     {
                         PopulateVoxel(x, y, z);
                     }
@@ -161,9 +160,9 @@ namespace MilkSpun.CubeWorld
                 foreach (var vert in faceConfig.vertices)
                 {
                     _meshData.vertices.Add(vert + voxel.LocalPos);
-                    _meshData.normals.Add(ChunkConfig.VoxelFaceOffset[faceType]);
+                    _meshData.normals.Add(ChunkConfigData.VoxelFaceOffset[faceType]);
                 }
-                var textureID = voxel.GetTextureID(faceType, ChunkConfig.TextureAtlasSize);
+                var textureID = voxel.GetTextureID(faceType, ChunkConfigData.TextureAtlasSize);
                 AddTexture(textureID, faceConfig.uv);
 
                 foreach (var triangle in faceConfig.triangles)
@@ -176,9 +175,9 @@ namespace MilkSpun.CubeWorld
 
         private void AddTexture(int textureID, IEnumerable<Vector2> uvs)
         {
-            var textureAtlasSizeInBlocks = ChunkConfig.textureAtlasSizeInBlocks;
-            var normalizedBlockTextureSize = ChunkConfig.NormalizedBlockTextureSize;
-            var textureAtlasSize = ChunkConfig.TextureAtlasSize;
+            var textureAtlasSizeInBlocks = ChunkConfigData.TextureAtlasSizeInBlocks;
+            var normalizedBlockTextureSize = ChunkConfigData.NormalizedBlockTextureSize;
+            var textureAtlasSize = ChunkConfigData.TextureAtlasSize;
 
             var id = textureID % textureAtlasSize;
 
@@ -265,7 +264,7 @@ namespace MilkSpun.CubeWorld
                 var xCoordPos = x + Chunk.LocalPosition.x;
                 var zCoordPos = z + Chunk.LocalPosition.z;
 
-                var voxelFacePos = new Vector3(xCoordPos, y, zCoordPos) + ChunkConfig.VoxelFaceOffset[voxelFaceType];
+                var voxelFacePos = new Vector3(xCoordPos, y, zCoordPos) + ChunkConfigData.VoxelFaceOffset[voxelFaceType];
 
                 if (!World.CheckPositionOnGround(voxelFacePos.x, voxelFacePos.y, voxelFacePos.z))
                 {
@@ -279,8 +278,8 @@ namespace MilkSpun.CubeWorld
                 var lx = Mathf.FloorToInt(voxelFacePos.x);
                 var ly = Mathf.FloorToInt(voxelFacePos.y);
                 var lz = Mathf.FloorToInt(voxelFacePos.z);
-                var width = ChunkConfig.WorldSizeInVoxels;
-                var height = ChunkConfig.chunkHeight;
+                var width = ChunkConfigData.WorldSizeInVoxels;
+                var height = ChunkConfigData.ChunkHeight;
 
                 return lx >= 0 &&
                     lx <= width - 1 &&

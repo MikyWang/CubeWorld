@@ -66,6 +66,7 @@ namespace MilkSpun.CubeWorld.Managers
             Random.InitState(chunkConfig.seed);
             _mainThreadId = Thread.CurrentThread.ManagedThreadId;
             _unitySyncContext = TaskScheduler.FromCurrentSynchronizationContext();
+            ChunkConfigData.Init(chunkConfig);
             Locator.World = World ??= new World();
             World.GenerateWorld();
             SetCamera(GeneratePlayer());
@@ -73,7 +74,7 @@ namespace MilkSpun.CubeWorld.Managers
 
         private GameObject GeneratePlayer()
         {
-            var middle = World.MiddleCoord * chunkConfig.chunkWidth + Mathf.FloorToInt((float)chunkConfig.chunkWidth / 2);
+            var middle = World.MiddleCoord * ChunkConfigData.ChunkWidth + Mathf.FloorToInt((float)chunkConfig.chunkWidth / 2);
             var middleChunk = World.Chunks[World.MiddleCoord, World.MiddleCoord];
             var solidVoxel = middleChunk.GetTopSolidVoxelFromPosition(middle, middle);
             var pos = new Vector3(middle, solidVoxel.y + 1, middle);

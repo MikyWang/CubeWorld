@@ -7,7 +7,6 @@ namespace MilkSpun.CubeWorld.Utils
 {
     public static class VoxelExtentions
     {
-        private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
         private static List<VoxelConfig> VoxelConfigs => GameManager.Instance.voxelConfigs;
         private static World World => GameManager.Instance.World;
 

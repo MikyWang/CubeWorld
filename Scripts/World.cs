@@ -21,9 +21,8 @@ namespace MilkSpun.CubeWorld
         public Vector3 Position => Transform.position;
         public Chunk[,] Chunks => _chunks;
         public int MiddleCoord { get; }
-        private static ChunkConfig ChunkConfig => GameManager.Instance.chunkConfig;
         private static List<Biome> Biomes => GameManager.Instance.Biomes;
-        private static int NoiseResolution => ChunkConfig.chunkWidth;
+        private static int NoiseResolution => ChunkConfigData.ChunkWidth;
         private static WorldRenderer WorldPrefab => GameManager.Instance.WorldPrefab;
 
         private readonly WorldRenderer _worldRenderer;
@@ -35,8 +34,8 @@ namespace MilkSpun.CubeWorld
         public World(Vector3 center)
         {
             Center = center;
-            MiddleCoord = Mathf.FloorToInt((float)ChunkConfig.chunkCoordSize / 2);
-            _chunks = new Chunk[ChunkConfig.chunkCoordSize, ChunkConfig.chunkCoordSize];
+            MiddleCoord = Mathf.FloorToInt((float)ChunkConfigData.ChunkCoordSize / 2);
+            _chunks = new Chunk[ChunkConfigData.ChunkCoordSize, ChunkConfigData.ChunkCoordSize];
             _worldRenderer = Object.Instantiate(WorldPrefab);
             _worldRenderer.World = this;
             _trees = new BlockingCollection<Tree>(new ConcurrentQueue<Tree>());
@@ -51,7 +50,7 @@ namespace MilkSpun.CubeWorld
             var x = chunkCoord.x;
             var z = chunkCoord.z;
 
-            if (x < 0 || x >= ChunkConfig.chunkCoordSize || z < 0 || z >= ChunkConfig.chunkCoordSize) return;
+            if (x < 0 || x >= ChunkConfigData.ChunkCoordSize || z < 0 || z >= ChunkConfigData.ChunkCoordSize) return;
 
             _chunks[x, z] ??= new Chunk(chunkCoord);
             _chunks[x, z].CreateChunk();
@@ -76,13 +75,13 @@ namespace MilkSpun.CubeWorld
         /// <returns>存在则返回true,否则false</returns>
         public static bool IsPositionOnWorld(float x, float z)
         {
-            var xChunk = Mathf.FloorToInt(x / ChunkConfig.chunkWidth);
-            var zChunk = Mathf.FloorToInt(z / ChunkConfig.chunkWidth);
+            var xChunk = Mathf.FloorToInt(x / ChunkConfigData.ChunkWidth);
+            var zChunk = Mathf.FloorToInt(z / ChunkConfigData.ChunkWidth);
 
             return xChunk >= 0 &&
-                xChunk <= ChunkConfig.chunkCoordSize - 1 &&
+                xChunk <= ChunkConfigData.ChunkCoordSize - 1 &&
                 zChunk >= 0 &&
-                zChunk <= ChunkConfig.chunkCoordSize - 1;
+                zChunk <= ChunkConfigData.ChunkCoordSize - 1;
         }
 
         /// <summary>
@@ -95,7 +94,7 @@ namespace MilkSpun.CubeWorld
         {
             var x = Mathf.FloorToInt(pos.x);
             var z = Mathf.FloorToInt(pos.z);
-            var width = ChunkConfig.WorldSizeInVoxels;
+            var width = ChunkConfigData.WorldSizeInVoxels;
 
             return x >= radius && x <= width - radius && z >= radius && z <= width - radius;
         }
@@ -109,12 +108,12 @@ namespace MilkSpun.CubeWorld
         /// <returns>存在则返回true,否则false</returns>
         public bool CheckPositionOnGround(float x, float y, float z)
         {
-            var xChunk = Mathf.FloorToInt(x / ChunkConfig.chunkWidth);
-            var zChunk = Mathf.FloorToInt(z / ChunkConfig.chunkWidth);
+            var xChunk = Mathf.FloorToInt(x / ChunkConfigData.ChunkWidth);
+            var zChunk = Mathf.FloorToInt(z / ChunkConfigData.ChunkWidth);
             if (xChunk < 0 ||
-                xChunk > ChunkConfig.chunkCoordSize - 1 ||
+                xChunk > ChunkConfigData.ChunkCoordSize - 1 ||
                 zChunk < 0 ||
-                zChunk > ChunkConfig.chunkCoordSize - 1)
+                zChunk > ChunkConfigData.ChunkCoordSize - 1)
                 return false;
 
             var chunk = GetChunkFromPosition(x, z);
@@ -145,13 +144,13 @@ namespace MilkSpun.CubeWorld
 
             foreach (var bo in Biomes)
             {
-                var weight = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfig.seed, bo.scale, NoiseResolution);
+                var weight = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfigData.Seed, bo.scale, NoiseResolution);
                 if (weight > strongestWeight)
                 {
                     strongestWeight = weight;
                     biome = bo;
                 }
-                var height = NoiseGenerator.Get2DPerlinNoiseWithWaves(noisePos, bo.offset + ChunkConfig.seed, bo.terrainScale, bo.waves, NoiseResolution) * weight * bo.terrainHeight;
+                var height = NoiseGenerator.Get2DPerlinNoiseWithWaves(noisePos, bo.offset + ChunkConfigData.Seed, bo.terrainScale, bo.waves, NoiseResolution) * weight * bo.terrainHeight;
                 if (height <= 0) continue;
                 sumHeight += height;
                 count++;
@@ -169,7 +168,7 @@ namespace MilkSpun.CubeWorld
                 //随机生成树木
                 if (biome.hasTree && TreePass(pos, biome))
                 {
-                    var noiseHeight = biome.maxHeight * NoiseGenerator.Get2DPerlinNoise(noisePos, 250f + ChunkConfig.seed, 3f, NoiseResolution);
+                    var noiseHeight = biome.maxHeight * NoiseGenerator.Get2DPerlinNoise(noisePos, 250f + ChunkConfigData.Seed, 3f, NoiseResolution);
                     var height = Mathf.FloorToInt(noiseHeight + biome.minHeight);
                     var tree = new Tree(pos) { height = height };
                     _trees.Add(tree);
@@ -185,15 +184,15 @@ namespace MilkSpun.CubeWorld
                 {
                     if (y < lode.minHeight || y > lode.maxHeight) continue;
 
-                    if (NoiseGenerator.Get3DPerlinNoise(pos, lode.offset + ChunkConfig.seed, lode.scale, lode.threshold)) voxelType = lode.voxelType;
+                    if (NoiseGenerator.Get3DPerlinNoise(pos, lode.offset + ChunkConfigData.Seed, lode.scale, lode.threshold)) voxelType = lode.voxelType;
                 }
             return voxelType;
         }
 
         public ref Chunk GetChunkFromPosition(float x, float z)
         {
-            var xChunk = Mathf.FloorToInt(x / ChunkConfig.chunkWidth);
-            var zChunk = Mathf.FloorToInt(z / ChunkConfig.chunkWidth);
+            var xChunk = Mathf.FloorToInt(x / ChunkConfigData.ChunkWidth);
+            var zChunk = Mathf.FloorToInt(z / ChunkConfigData.ChunkWidth);
             _chunks[xChunk, zChunk] ??= new Chunk(new ChunkCoord(xChunk, zChunk));
             return ref _chunks[xChunk, zChunk];
         }
@@ -203,10 +202,10 @@ namespace MilkSpun.CubeWorld
             if (!IsPositionCanBuild(pos, 2)) return false;
 
             var noisePos = new Vector2(pos.x, pos.z);
-            var treeZoneNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfig.seed, biome.treeZoneScale, NoiseResolution);
+            var treeZoneNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfigData.Seed, biome.treeZoneScale, NoiseResolution);
             if (!(treeZoneNoise > biome.treeZoneThreshold)) return false;
 
-            var treeNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfig.seed, biome.treeScale, NoiseResolution);
+            var treeNoise = NoiseGenerator.Get2DPerlinNoise(noisePos, ChunkConfigData.Seed, biome.treeScale, NoiseResolution);
             return treeNoise > biome.treeThreshold;
         }
         public override string ToString()
@@ -232,9 +231,9 @@ namespace MilkSpun.CubeWorld
         {
             while (true)
             {
-                for (var x = 0; x < ChunkConfig.chunkCoordSize; x++)
+                for (var x = 0; x < ChunkConfigData.ChunkCoordSize; x++)
                 {
-                    for (var z = 0; z < ChunkConfig.chunkCoordSize; z++)
+                    for (var z = 0; z < ChunkConfigData.ChunkCoordSize; z++)
                     {
                         _chunks[x, z]?.UpdateChunk();
                     }
