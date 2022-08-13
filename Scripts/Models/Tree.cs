@@ -12,6 +12,7 @@ namespace MilkSpun.CubeWorld.Models
         {
             this.position = position;
             height = 3;
+            Quaternion.Euler(0, 0, 30);
         }
 
         public override int GetHashCode()

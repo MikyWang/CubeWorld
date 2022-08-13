@@ -11,6 +11,7 @@ using MilkSpun.Common.MilkSpun.Scripts.Common;
 using MilkSpun.CubeWorld.Models;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
@@ -52,7 +53,6 @@ namespace MilkSpun.CubeWorld.Managers
         public ChunkRenderer ChunkPrefab => chunkPrefab;
         public WorldRenderer WorldPrefab => worldPrefab;
         public List<Biome> Biomes => biomes;
-
         private static TaskScheduler _unitySyncContext;
         private static int _mainThreadId;
 
@@ -61,6 +61,7 @@ namespace MilkSpun.CubeWorld.Managers
             base.Awake();
             DontDestroyOnLoad(this);
         }
+
         private void Start()
         {
             Random.InitState(chunkConfig.seed);
@@ -82,6 +83,7 @@ namespace MilkSpun.CubeWorld.Managers
             player.transform.position = pos;
             return player;
         }
+        
         private void SetCamera(GameObject focusObject)
         {
             CmFreeLook ??= Instantiate(cmPrefab).GetComponent<CinemachineFreeLook>();

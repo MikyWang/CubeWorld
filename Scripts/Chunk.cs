@@ -318,7 +318,7 @@ namespace MilkSpun.CubeWorld
                 int textureAtlasSize)
             {
                 var voxelConfig = GetVoxelConfig();
-
+                
                 return voxelFaceType switch
                 {
                     VoxelFaceType.Back => voxelConfig.backFaceTexture +
